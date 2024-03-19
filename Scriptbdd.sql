@@ -1,4 +1,5 @@
 -- Déclaration de package type
+-- tentative de push A VOIR SI CELA FONCTIONNE  s
 create or replace package PDTypes  
 as
     TYPE ref_cursor IS REF CURSOR;
