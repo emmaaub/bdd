@@ -18,7 +18,7 @@ ALTER TRIGGER COMPOUNDINSERTTRIGGER_ARC DISABLE;
 CALL Peuplement_ARC ('Kys', 'Raoult');
 
 
-
+--tests commentaire
 
 
 CREATE OR REPLACE PROCEDURE Peuplement_Medecin(
