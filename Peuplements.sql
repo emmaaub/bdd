@@ -60,7 +60,7 @@ CREATE OR REPLACE PROCEDURE Peuplement_patient (
 AS
 PNumADELIM int;
 BEGIN
-    SELECT Num_ADELI_Medecin INTO PNumADELIM FROM Medecin WHERE Num_ADELI_Medecin = 123456789;
+    SELECT Num_ADELI_Medecin INTO PNumADELIM FROM Medecin WHERE Num_ADELI_Medecin = 123456788;
     
     INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
     VALUES (PNumADELIM, Pnom, PPrenom, Psexe, PDDN, PNumSecu, Pmeno, Pgrippe, Pcovid, Phypertension, Pobesite, Pgroupe, Psousgroupe);
@@ -70,7 +70,7 @@ END Peuplement_patient;
 
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_PATIENT DISABLE;
-CALL Peuplement_patient('Richard', 'Louis', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 101022652352144, 0, 1, 1, 0, 0, 'PP', 3);
+CALL Peuplement_patient('Richard', 'Marie', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 1, 1, 0, 0, 'PP', 3);
 
 
 --############################################################################
@@ -116,6 +116,10 @@ AS
     v_etat VARCHAR2(50);
     v_local_date_analyse DATE;
     v_nb_analyse_hors_norme NUMBER := 0;
+    v_complementaire INTEGER;
+    v_hypertension INTEGER; 
+    v_obesite INTEGER;
+    v_menopause INTEGER;
 BEGIN
     --if p_concentration_chol >= p_normal_chol_1 AND p_concentration_chol <= p_normal_chol_2 THEN
         
@@ -164,7 +168,7 @@ BEGIN
     end if;
 
 
-    SELECT Date_Analyse_Sang INTO v_local_date_analyse FROM Sang_Analyse 
+    SELECT (Date_Analyse_Sang) INTO v_local_date_analyse FROM Sang_Analyse 
     WHERE Date_Analyse_Sang = SYSDATE AND Id_Patient = p_id_patient;
 
     if v_nb_analyse_hors_norme >= 3 THEN 
@@ -172,9 +176,28 @@ BEGIN
         SET Date_Prochaine_Analyse_Sang = v_local_date_analyse + 0.21
         WHERE Date_Analyse_Sang = SYSDATE AND Id_Patient = p_id_patient;
     else
-        UPDATE Sang_Analyse 
-        SET Date_Prochaine_Analyse_Sang = v_local_date_analyse + 6
-        WHERE Date_Analyse_Sang = SYSDATE AND Id_Patient = p_id_patient;
+            SELECT Complementaire_Sang INTO v_complementaire 
+            FROM Sang_Analyse 
+            WHERE Id_Patient = p_id_Patient AND Date_Analyse_Sang = SYSDATE;
+            
+            SELECT Hypertension, Obesite, Menopause INTO v_hypertension, v_obesite, v_menopause 
+            FROM Patient 
+            WHERE Id_Patient = p_id_Patient;
+            
+            
+        if (v_complementaire = 1) AND (v_hypertension=1 OR v_obesite=1 OR v_menopause=1) then
+            UPDATE Sang_Analyse 
+            SET Date_Prochaine_Analyse_Sang = v_local_date_analyse + 5
+            WHERE Date_Analyse_Sang = SYSDATE AND Id_Patient = p_id_patient;
+        elsif (v_complementaire = 0) AND (v_hypertension=1 OR v_obesite=1 OR v_menopause=1) then
+            UPDATE Sang_Analyse 
+            SET Date_Prochaine_Analyse_Sang = v_local_date_analyse + 3
+            WHERE Date_Analyse_Sang = SYSDATE AND Id_Patient = p_id_patient;
+        else
+            UPDATE Sang_Analyse 
+            SET Date_Prochaine_Analyse_Sang = v_local_date_analyse + 6 
+            WHERE Date_Analyse_Sang = SYSDATE AND Id_Patient = p_id_patient;
+        end if;
     end if;
     
     COMMIT;
@@ -184,31 +207,31 @@ END;
 --PEUPLEMENT
     
 CREATE OR REPLACE PROCEDURE Peuplement_Analyse_Sang(
-PDate_Analyse date,
-Pcomplementaire int,
-PresChol int,
-PresGly int,
-PresPlaq int,
-Pres4 int,
-Pres5  int,
-Pres6 int)
+    PDate_Analyse DATE,
+    Pcomplementaire INT,
+    PresChol INT,
+    PresGly INT,
+    PresPlaq INT,
+    Pres4 INT,
+    Pres5 INT,
+    Pres6 INT
+)
 AS
-
- PIDPatient int;
-    
+    PIDPatient INT;
 BEGIN
     SELECT Id_Patient INTO PIDPatient FROM Patient WHERE Id_Patient = 1;
+    
     INSERT INTO Sang_Analyse (Id_Patient, Date_Analyse_Sang, Complementaire_Sang, Resultat_Cholesterol, Resultat_Glycemie, Resultat_Plaquettes, Resultat_4, Resultat_5, Resultat_6) 
     VALUES (PIDPatient, PDate_Analyse, Pcomplementaire, PresChol, PresGly, PresPlaq, Pres4, Pres5, Pres6);
     
     verifier_concentration(PresChol, PresGly, PresPlaq, Pres4, Pres5, Pres6, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, PIDPatient);
     
-    
     COMMIT;
 END Peuplement_Analyse_Sang;
 /
 
---ALTER TRIGGER COMPOUNDINSERTTRIGGER_SANG_ANA DISABLE;
---ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
-CALL Peuplement_Analyse_Sang (SYSTIMESTAMP, 0, 3, 3, 3, 3, 3, 3);
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_SANG_ANA DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
+
+CALL Peuplement_Analyse_Sang (SYSDATE, 1, 3, 3, 3, 3, 3, 3);
 
