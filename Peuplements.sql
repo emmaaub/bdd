@@ -208,26 +208,27 @@ BEGIN
         END IF;
     END IF;
     
-    
-    -- Vérification du nombre d'analyses hors norme et mise à jour de la date de la prochaine analyse
-    IF v_nb_analyse_hors_norme >= 3 THEN 
-        :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 0.21;
-    ELSE
-        -- Récupération des informations sur le patient
-        SELECT Hypertension, Obesite, Menopause 
-        INTO v_hypertension, v_obesite, v_menopause 
-        FROM Patient 
-        WHERE Id_Patient = :NEW.Id_Patient;
-        
-        -- Mise à jour de la date de la prochaine analyse selon les conditions
-        IF (:New.Complementaire_Sang = 1) AND (v_hypertension=1 OR v_obesite=1 OR v_menopause=1) THEN
-            :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 5;
-        ELSIF (:New.Complementaire_Sang = 0) AND (v_hypertension=1 OR v_obesite=1 OR v_menopause=1) THEN
-            :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 3;
+
+        IF v_nb_analyse_hors_norme >= 3 THEN 
+            :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 0.21;
         ELSE
-            :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 6;
+            -- Récupération des informations sur le patient
+            SELECT Hypertension, Obesite, Menopause 
+            INTO v_hypertension, v_obesite, v_menopause 
+            FROM Patient 
+            WHERE Id_Patient = :NEW.Id_Patient;
+            
+            -- Mise à jour de la date de la prochaine analyse selon les conditions
+            IF (:NEW.Complementaire_Sang = 1) AND (v_hypertension=1 OR v_obesite=1 OR v_menopause=1) THEN
+                :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 5;
+            ELSIF (:NEW.Complementaire_Sang = 0) AND (v_hypertension=1 OR v_obesite=1 OR v_menopause=1) THEN
+                :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 3;
+            ELSE
+                :NEW.Date_Prochaine_Analyse_Sang := :NEW.Date_Analyse_Sang + 6;
+            END IF;
         END IF;
-    END IF;
+
+    
 END;
 /
 
