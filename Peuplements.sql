@@ -262,3 +262,58 @@ ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
 
 CALL Peuplement_Analyse_Sang (2, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
 
+
+--############################################################################
+--###################ANALYSE PCR COVID#############################################
+--############################################################################
+
+
+CREATE OR REPLACE PROCEDURE Peuplement_PCR_COVID (
+    p_id_patient INT,
+    p_date_analyse_pcr_covid DATE,
+    p_resultat_pcr_covid VARCHAR2
+)
+AS
+    v_id_patient PCR_Covid_Analyse.Id_Patient%TYPE;
+BEGIN
+    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Id_Patient = p_id_patient;
+    
+    INSERT INTO PCR_Covid_Analyse (Id_Patient, Date_Analyse_PCR_Covid, Resultat_PCR_Covid) 
+    VALUES (v_id_patient, p_date_analyse_pcr_covid, p_resultat_pcr_covid);
+    
+    COMMIT;
+END Peuplement_PCR_COVID;
+/
+
+CREATE OR REPLACE TRIGGER date_pcr_trigger
+BEFORE INSERT OR UPDATE ON PCR_Covid_Analyse
+FOR EACH ROW
+DECLARE
+    v_id_patient PCR_Covid_Analyse.Id_Patient%TYPE;
+    v_date_analyse_pcr_covid PCR_Covid_Analyse.Date_Analyse_PCR_Covid%TYPE;
+BEGIN
+    IF (:NEW.Resultat_PCR_Covid = 'Negatif') THEN
+        :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid + 1;
+    ELSIF (:NEW.Resultat_PCR_Covid = 'Variant alpha detecte') THEN
+        :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid;
+        
+        SELECT Id_Patient, Date_Analyse_PCR_Covid 
+        INTO v_id_patient, v_date_analyse_pcr_covid 
+        FROM PCR_Covid_Analyse 
+        WHERE Id_Patient = :NEW.Id_Patient; -- Ajout de cette condition pour éviter l'erreur ORA-01403
+        
+        UPDATE Patient 
+        SET Date_Fin_Inclusion = v_date_analyse_pcr_covid,
+            Motif_Fin_Inclusion = 'PCR Covid Positive' 
+        WHERE Id_Patient = v_id_patient;
+    END IF;
+END;
+/
+
+
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_PCR_COVI DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
+
+CALL Peuplement_PCR_Covid (1, SYSDATE, 'Variant alpha detecte');
+
