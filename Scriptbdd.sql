@@ -1,5 +1,4 @@
 -- Déclaration de package type
--- tentative de push A VOIR SI CELA FONCTIONNE  &jahahahaha HAHAHA
 create or replace package PDTypes  
 as
     TYPE ref_cursor IS REF CURSOR;
@@ -324,6 +323,9 @@ drop index ANALYSE_TEST_EFFORT_FK
 drop table EFFORT_ANALYSE cascade constraints
 /
 
+drop table INTERVALLES_RESULTATS_SANG_ANA cascade constraints
+/
+
 drop index SUIVI_PATIENT_FK
 /
 
@@ -580,7 +582,13 @@ create table CENTRE_EC (
 )
 /
 
-
+/*==============================================================*/
+/* Index : CENTRE_ARC2_FK                                       */
+/*==============================================================*/
+create index CENTRE_ARC2_FK on CENTRE_EC (
+   
+)
+/
 
 /*==============================================================*/
 /* Table : EEG_ANALYSE                                          */
@@ -615,8 +623,8 @@ create table EFFORT_ANALYSE (
    DATE_PROCHAINE_ANALYSE_EFFORT DATE,
    COMPLEMENTAIRE_EFFORT NUMBER                not null
       constraint CKC_COMPLEMENTAIRE_EF_EFFORT_A check (COMPLEMENTAIRE_EFFORT in (0,1)),
-   RESULTAT_RYTHME_CARDIAQUE_AVANT NUMBER,
-   RESULTAT_RYTHME_CARDIAQUE_APRES NUMBER,
+   RESULAT_RYTHME_CARDIAQUE_AVANT NUMBER,
+   RESULTAT_RYTHME_CARDIAQUE_APRE NUMBER,
    RESULTAT_RYTHME_CARDIAQUE_UNEM NUMBER,
    constraint PK_EFFORT_ANALYSE primary key (ID_ANALYSE_EFFORT)
 )
@@ -627,6 +635,19 @@ create table EFFORT_ANALYSE (
 /*==============================================================*/
 create index ANALYSE_TEST_EFFORT_FK on EFFORT_ANALYSE (
    ID_PATIENT ASC
+)
+/
+
+/*==============================================================*/
+/* Table : INTERVALLES_RESULTATS_SANG_ANA                       */
+/*==============================================================*/
+create table INTERVALLES_RESULTATS_SANG_ANA (
+   TYPE_ANALYSE         VARCHAR2(1024)        not null,
+   I_NORMAL_1           NUMBER                not null,
+   I_NORMAL_2           NUMBER                not null,
+   I_ANORMAL_1          NUMBER                not null,
+   I_ANORMAL_2          NUMBER                not null,
+   constraint PK_INTERVALLES_RESULTATS_SANG_ primary key (TYPE_ANALYSE)
 )
 /
 
@@ -915,6 +936,10 @@ alter table AUXILIAIRE_VISITE_TRACABILITE
       references VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE)
 /
 
+alter table CENTRE_EC
+   add constraint FK_CENTRE_E_ARCCENTRE_ARC foreign key ()
+      references ARC (ID_ARC)
+/
 
 alter table EEG_ANALYSE
    add constraint FK_EEG_ANAL_ANALYSE_T_PATIENT foreign key (ID_PATIENT)
@@ -2119,7 +2144,3 @@ exception
        raise_application_error(errno, errmsg);
 end;
 /
-
-
-
-
