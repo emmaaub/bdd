@@ -460,7 +460,16 @@ order
 
 create sequence AI_VISITE_QUOTIDIENNE
 /
-
+drop sequence AI_TESTS
+/
+create sequence AI_TESTS
+increment by 1
+start with 1
+ nomaxvalue
+ nominvalue
+ nocache
+order
+/
 /*==============================================================*/
 /* Table : ACTE_MEDICAL_CARNET_MEDICAL                          */
 /*==============================================================*/
@@ -1108,8 +1117,21 @@ for update on ACTE_MEDICAL_CARNET_MEDICAL compound trigger
 
 END
 /
-
-
+create or replace trigger TIB_TESTS before insert on Tests_BDD for each row
+declare
+integrity_error  exception;
+    errno            integer;
+    errmsg           char(200);
+    dummy            integer;
+    found            boolean;
+begin
+select AI_TESTS.NEXTVAL INTO :new.Id_Test from dual;
+--  Traitement d'erreurs
+exception
+    when integrity_error then
+       raise_application_error(errno, errmsg);
+end;
+/
 create trigger TIB_ACTE_MEDICAL_CARNET_MEDICA before insert
 on ACTE_MEDICAL_CARNET_MEDICAL for each row
 declare
