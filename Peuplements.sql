@@ -1,6 +1,6 @@
---############################################################################
---###################PEUPLEMENT#############################################
---############################################################################
+--##################################################################################################################################################################################
+--################### ARC ##########################################################################################################################################################
+--##################################################################################################################################################################################
 
 CREATE OR REPLACE PROCEDURE Peuplement_ARC(
     PnomARC varchar2,
@@ -18,7 +18,10 @@ ALTER TRIGGER COMPOUNDINSERTTRIGGER_ARC DISABLE;
 CALL Peuplement_ARC ('Kys', 'Raoult');
 
 
---tests commentaire
+--##########################################################################################################################################################################################################
+--################### MEDECIN ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
 
 
 CREATE OR REPLACE PROCEDURE Peuplement_Medecin(
@@ -41,6 +44,9 @@ END Peuplement_Medecin;
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_MEDECIN DISABLE;
 CALL Peuplement_Medecin (123456788, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
 
+--##########################################################################################################################################################################################################
+--################### PATIENT ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
 
 
 
@@ -70,10 +76,13 @@ END Peuplement_patient;
 
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_PATIENT DISABLE;
-CALL Peuplement_patient('Richard', 'Pierre', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 101022652352144, 0, 1, 1, 0, 0, 'PP', 3);
+CALL Peuplement_patient('Richard', 'Malade', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 1, 1, 1, 1, 'PP', 3);
 
 
--- PEUPLEMENT INTERVALLES 
+--##########################################################################################################################################################################################################
+--################### INTERVALLES SANG ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
 CREATE OR REPLACE PROCEDURE Intervalles_resultats_sang_peuplement(
 p_type_analyse varchar2,
 p_normal_1 integer,
@@ -88,12 +97,10 @@ begin
 end Intervalles_resultats_sang_peuplement;
 /
 
-CALL Intervalles_resultats_sang_peuplement('Cholesterol', 2, 5, 0, 7);
---############################################################################
---###################ANALYSE SANG#############################################
---############################################################################
-
---PROCEDURE DE VERIFICATION DES CONCENTRATIONS SANGUINES
+CALL Intervalles_resultats_sang_peuplement('6', 2, 5, 0, 7);
+--##########################################################################################################################################################################################################
+--###################ANALYSE SANG###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
 
 CREATE OR REPLACE TRIGGER verifier_concentration_trigger
 BEFORE INSERT OR UPDATE ON Sang_Analyse 
@@ -232,7 +239,6 @@ BEGIN
 END;
 /
 
---PEUPLEMENT
     
 CREATE OR REPLACE PROCEDURE Peuplement_Analyse_Sang(
     PIdPatient INT,
@@ -263,9 +269,9 @@ ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
 CALL Peuplement_Analyse_Sang (2, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
 
 
---############################################################################
---###################ANALYSE PCR COVID#############################################
---############################################################################
+--##########################################################################################################################################################################################################
+--###################ANALYSE PCR COVID###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
 
 
 CREATE OR REPLACE PROCEDURE Peuplement_PCR_COVID (
@@ -289,16 +295,25 @@ CREATE OR REPLACE TRIGGER date_pcr_trigger
 BEFORE INSERT OR UPDATE ON PCR_Covid_Analyse
 FOR EACH ROW
 DECLARE
-    v_id_patient int;
-    v_date_analyse_pcr_covid date;
+    v_id_patient PCR_Covid_Analyse.Id_Patient%TYPE;
+    v_hypertension Patient.Hypertension%TYPE;
+    v_obesite Patient.Obesite%TYPE;
+    v_menopause Patient.Menopause%TYPE;
 BEGIN
+    SELECT Hypertension, Obesite, Menopause INTO v_hypertension, v_obesite, v_menopause FROM Patient WHERE Id_Patient = :NEW.Id_Patient;
+    
     IF (:NEW.Resultat_PCR_Covid = 'Negatif') THEN
-        :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid + 1;
+        IF (v_hypertension = 1 OR v_obesite = 1 OR v_menopause = 1) THEN
+            :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid;
+        ELSE
+            :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid + 1;
+        END IF;
         
         UPDATE Patient 
         SET Date_Fin_Inclusion = NULL,
             Motif_Fin_Inclusion = NULL 
         WHERE Id_Patient = :NEW.Id_Patient;
+        
     ELSIF (:NEW.Resultat_PCR_Covid in ('Variant alpha detecte', 'Variant delta detecte', 'Variant omega detecte')) THEN
         :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid;
 
@@ -316,5 +331,5 @@ ALTER TRIGGER COMPOUNDINSERTTRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
 
-CALL Peuplement_PCR_Covid (1, SYSDATE, 'Variant delta detecte');
+CALL Peuplement_PCR_Covid (2, SYSDATE, 'Negatif');
 
