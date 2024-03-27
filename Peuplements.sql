@@ -274,7 +274,7 @@ CREATE OR REPLACE PROCEDURE Peuplement_PCR_COVID (
     p_resultat_pcr_covid VARCHAR2
 )
 AS
-    v_id_patient PCR_Covid_Analyse.Id_Patient%TYPE;
+    v_id_patient int;
 BEGIN
     SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Id_Patient = p_id_patient;
     
@@ -289,23 +289,24 @@ CREATE OR REPLACE TRIGGER date_pcr_trigger
 BEFORE INSERT OR UPDATE ON PCR_Covid_Analyse
 FOR EACH ROW
 DECLARE
-    v_id_patient PCR_Covid_Analyse.Id_Patient%TYPE;
-    v_date_analyse_pcr_covid PCR_Covid_Analyse.Date_Analyse_PCR_Covid%TYPE;
+    v_id_patient int;
+    v_date_analyse_pcr_covid date;
 BEGIN
     IF (:NEW.Resultat_PCR_Covid = 'Negatif') THEN
         :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid + 1;
-    ELSIF (:NEW.Resultat_PCR_Covid = 'Variant alpha detecte') THEN
-        :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid;
-        
-        SELECT Id_Patient, Date_Analyse_PCR_Covid 
-        INTO v_id_patient, v_date_analyse_pcr_covid 
-        FROM PCR_Covid_Analyse 
-        WHERE Id_Patient = :NEW.Id_Patient; -- Ajout de cette condition pour éviter l'erreur ORA-01403
         
         UPDATE Patient 
-        SET Date_Fin_Inclusion = v_date_analyse_pcr_covid,
+        SET Date_Fin_Inclusion = NULL,
+            Motif_Fin_Inclusion = NULL 
+        WHERE Id_Patient = :NEW.Id_Patient;
+    ELSIF (:NEW.Resultat_PCR_Covid in ('Variant alpha detecte', 'Variant delta detecte', 'Variant omega detecte')) THEN
+        :NEW.Date_Prochaine_Analyse_PCR_Cov := :NEW.Date_Analyse_PCR_Covid;
+
+        
+        UPDATE Patient 
+        SET Date_Fin_Inclusion = :NEW.Date_Analyse_PCR_Covid,
             Motif_Fin_Inclusion = 'PCR Covid Positive' 
-        WHERE Id_Patient = v_id_patient;
+        WHERE Id_Patient = :NEW.Id_Patient;
     END IF;
 END;
 /
@@ -315,5 +316,5 @@ ALTER TRIGGER COMPOUNDINSERTTRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
 
-CALL Peuplement_PCR_Covid (1, SYSDATE, 'Variant alpha detecte');
+CALL Peuplement_PCR_Covid (1, SYSDATE, 'Variant delta detecte');
 
