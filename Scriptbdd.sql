@@ -371,6 +371,9 @@ drop index ANALYSE_EC_FK
 drop table SANG_ANALYSE cascade constraints
 /
 
+drop table TESTS_BDD cascade constraints
+/
+
 drop index TRACABILITE_MEDECIN_VISITE2_FK
 /
 
@@ -623,9 +626,9 @@ create table EFFORT_ANALYSE (
    DATE_PROCHAINE_ANALYSE_EFFORT DATE,
    COMPLEMENTAIRE_EFFORT NUMBER                not null
       constraint CKC_COMPLEMENTAIRE_EF_EFFORT_A check (COMPLEMENTAIRE_EFFORT in (0,1)),
-   RESULAT_RYTHME_CARDIAQUE_AVANT NUMBER,
-   RESULTAT_RYTHME_CARDIAQUE_APRE NUMBER,
-   RESULTAT_RYTHME_CARDIAQUE_UNEM NUMBER,
+   RESULTAT_AVANT_BPM   NUMBER,
+   RESULTAT_APRES_BPM   NUMBER,
+   RESULTAT_UNEMIN_BPM  NUMBER,
    constraint PK_EFFORT_ANALYSE primary key (ID_ANALYSE_EFFORT)
 )
 /
@@ -824,6 +827,17 @@ create table SANG_ANALYSE (
 /*==============================================================*/
 create index ANALYSE_EC_FK on SANG_ANALYSE (
    ID_PATIENT ASC
+)
+/
+
+/*==============================================================*/
+/* Table : TESTS_BDD                                            */
+/*==============================================================*/
+create table TESTS_BDD (
+   ID_TEST              NUMBER                not null,
+   NOM_TEST             VARCHAR2(1024)        not null,
+   RESULTAT_TEST        VARCHAR2(1024)        not null,
+   constraint PK_TESTS_BDD primary key (ID_TEST)
 )
 /
 
