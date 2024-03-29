@@ -94,7 +94,13 @@ begin
 end Intervalles_resultats_sang_peuplement;
 /
 
+CALL Intervalles_resultats_sang_peuplement('Cholesterol', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('Glycemie', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('Plaquettes', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('4', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('5', 2, 5, 0, 7);
 CALL Intervalles_resultats_sang_peuplement('6', 2, 5, 0, 7);
+
 
 
 --##########################################################################################################################################################################################################
