@@ -64,7 +64,7 @@ ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
 DELETE FROM EFFORT_ANALYSE;
 
-CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
+CALL Peuplement_Analyse_Effort (46, SYSDATE, 0, 100, 100, 100);
 /
 
 CREATE OR REPLACE PROCEDURE TestAutoIncrementation_Effort_Analyse deterministic AS
@@ -140,25 +140,42 @@ BEGIN
     VALUES (v_id_patient1, SYSDATE, 1, 100, 100, 100);
     select count(*) into nb2 from EFFORT_ANALYSE where id_patient = v_id_patient1;
     if nb2>0 then
-        select id_analyse_effort into v_id_analyse_effort2 from (select id_analyse_effort from EFFORT_ANALYSE where id_patient = v_id_patient1 
-        order by id_analyse_effort)
-        where rownum = 2;
+        SELECT id_analyse_effort INTO v_id_analyse_effort2 
+        FROM (
+            SELECT id_analyse_effort, ROW_NUMBER() OVER (ORDER BY id_analyse_effort) AS rn
+            FROM EFFORT_ANALYSE 
+            WHERE id_patient = v_id_patient1
+        ) 
+        WHERE rn = 2;
     end if;
     
     INSERT INTO EFFORT_ANALYSE(ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
     VALUES (v_id_patient2, SYSDATE, 0, 100, 100, 100);
-    --select count(*) into nb from EFFORT_ANALYSE where id_patient = v_id_patient2;
-    --if nb>0 then
-    select id_analyse_effort into v_id_analyse_effort3 from (select id_analyse_effort from EFFORT_ANALYSE where id_patient = v_id_patient2 
-    order by id_analyse_effort) where rownum = 1;
-    --end if;
+    select count(*) into nb3 from EFFORT_ANALYSE where id_patient = v_id_patient2;
+    if nb3>0 then
+        SELECT id_analyse_effort INTO v_id_analyse_effort3 
+        FROM (
+            SELECT id_analyse_effort, ROW_NUMBER() OVER (ORDER BY id_analyse_effort) AS rn
+            FROM EFFORT_ANALYSE 
+            WHERE id_patient = v_id_patient2
+        ) 
+        WHERE rn = 1;
+    end if;
     
     INSERT INTO EFFORT_ANALYSE(ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
     VALUES (v_id_patient2, SYSDATE, 1, 100, 100, 100);
-    --select id_analyse_effort into v_id_analyse_effort4 from EFFORT_ANALYSE where  id_patient = v_id_patient2 order by id_analyse_effort DESC;
-    select id_analyse_effort into v_id_analyse_effort4 from (select id_analyse_effort from EFFORT_ANALYSE where id_patient = v_id_patient2 order by id_analyse_effort)
-    where rownum = 2;
-   
+    select count(*) into nb4 from EFFORT_ANALYSE where id_patient = v_id_patient2;
+    if nb4>0 then
+        SELECT id_analyse_effort INTO v_id_analyse_effort4 
+        FROM (
+            SELECT id_analyse_effort, ROW_NUMBER() OVER (ORDER BY id_analyse_effort) AS rn
+            FROM EFFORT_ANALYSE 
+            WHERE id_patient = v_id_patient2
+        ) 
+        WHERE rn = 2;
+    end if;
+    
+    
     select DATE_PROCHAINE_ANALYSE_EFFORT into vpremiere_date_analyse from EFFORT_ANALYSE where id_analyse_effort = v_id_analyse_effort1;
     select DATE_PROCHAINE_ANALYSE_EFFORT into vseconde_date_analyse from EFFORT_ANALYSE where id_analyse_effort = v_id_analyse_effort2;
     select DATE_PROCHAINE_ANALYSE_EFFORT into vtrois_date_analyse from EFFORT_ANALYSE where id_analyse_effort = v_id_analyse_effort3;
@@ -166,7 +183,7 @@ BEGIN
     
     if vpremiere_date_analyse = SYSDATE+3 and vseconde_date_analyse = SYSDATE+1 and vtrois_date_analyse = SYSDATE+2 and vquatre_date_analyse = SYSDATE then
         rollback; 
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('Test_prediction_prochaine_date_Effort_Analyse', 'Test réussit') ;
+        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('Test_prediction_prochaine_date_Effort_Analyse', 'Test réussi') ;
         commit ; 
     elsif vpremiere_date_analyse != SYSDATE+3 then 
         rollback; 
