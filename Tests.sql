@@ -182,11 +182,12 @@ BEGIN
         --test réussi
         INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_Sang_NoComplementaire_MaladieGrave_GoodResults', 'Succès');
         COMMIT;
-    ELSE
+    ELSE    
         ROLLBACK;
         --sinon, test non réussi
         INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_Sang_NoComplementaire_MaladieGrave_GoodResults', 'Fail');
         COMMIT;
+        
     END IF;
 END;
 /
@@ -289,9 +290,10 @@ BEGIN
         INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_PCR_ResultatNeg_NoMaladieGrave', 'Succès');
         COMMIT;
     else 
+        RAISE_APPLICATION_ERROR(-20020, 'Not the good next day of PCR test for ' || v_id_patient);
+        --test non réussi
         ROLLBACK;
-        --test réussi
-        INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_PCR_ResultatNeg_NoMaladieGrave', 'Succès');
+        INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_PCR_ResultatNeg_NoMaladieGrave', 'Fail');
         COMMIT;
     end if;
 END Test_Date_Prochaine_Analyse_PCR_ResultatNeg_NoMaladieGrave;
@@ -342,9 +344,10 @@ BEGIN
         INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_PCR_ResultatPos', 'Succès');
         COMMIT;
     else
+        RAISE_APPLICATION_ERROR(-20030, 'Not the good next day of PCR test for' || v_id_patient);
         ROLLBACK;
-        --test réussi
-        INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_PCR_ResultatPos', 'Succès');
+        --test non réussi
+        INSERT INTO Tests_BDD (Nom_Test, Resultat_Test) VALUES ('Test_Date_Prochaine_Analyse_PCR_ResultatPos', 'Fail');
         COMMIT;
     end if;
 END Test_Date_Prochaine_Analyse_PCR_ResultatPos;
