@@ -207,6 +207,27 @@ end;
 
 call Test_prediction_prochaine_date_Effort_Analyse();
 
+drop table Patient cascade constraints;
+
+--------------------------------------------------------------------------------------------------------------
+
+create or replace trigger patient_exclusion before insert or update on PATIENT
+for each row
+declare
+begin
+    IF :new.OBESITE = 1 and :new.HYPERTENSION = 1 then 
+            :new.DATE_FIN_INCLUSION:= SYSDATE;
+            :new.MOTIF_FIN_INCLUSION:='A une maladie figurant dans la liste d’exclusion';
+    
+    end if; 
+end;
+/
+
+
+
+
+
+
 
 --drop TestAutoIncrementation_Effort_Analyse();
 
