@@ -180,3 +180,71 @@ BEGIN
     
 END;
 /
+
+--##########################################################################################################################################################################################################
+--################### date prochaine analyse dans la table effort ###############################################################################################################################
+--##########################################################################################################################################################################################################
+create or replace trigger prediction_date_prochaine_analyse_effort before insert or update on EFFORT_ANALYSE
+for each row
+declare
+    POBESITE NUMBER;
+    PHYPERTENSION NUMBER;
+    PMENOPAUSE NUMBER;
+    DATE_PRO_ANALYSE date;
+begin
+     SELECT OBESITE INTO POBESITE FROM Patient WHERE Id_Patient = :new.ID_Patient;
+     SELECT HYPERTENSION INTO PHYPERTENSION FROM Patient WHERE Id_Patient = :new.ID_Patient;
+     SELECT MENOPAUSE INTO PMENOPAUSE FROM Patient WHERE Id_Patient = :new.ID_Patient;
+
+    IF :new.COMPLEMENTAIRE_EFFORT = 1 then 
+        IF POBESITE = 1 or PHYPERTENSION = 1 or PMENOPAUSE = 1 then
+            :new.DATE_PROCHAINE_ANALYSE_EFFORT:= :new.DATE_ANALYSE_EFFORT;
+        else 
+            :new.DATE_PROCHAINE_ANALYSE_EFFORT:= :new.DATE_ANALYSE_EFFORT + 1;
+        end if; 
+    else 
+        IF POBESITE = 1 or PHYPERTENSION = 1 or PMENOPAUSE = 1 then
+            :new.DATE_PROCHAINE_ANALYSE_EFFORT:= :new.DATE_ANALYSE_EFFORT + 2;
+        else 
+            :NEW.DATE_PROCHAINE_ANALYSE_EFFORT := :new.DATE_ANALYSE_EFFORT + 3 ;
+         end if;    
+    end if;
+end ;
+/
+
+--##########################################################################################################################################################################################################
+--################### Exclusion de patient pour l'age et les maladies graves ###############################################################################################################################
+--##########################################################################################################################################################################################################
+
+CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion
+BEFORE INSERT OR UPDATE ON PATIENT
+FOR EACH ROW
+DECLARE
+    v_age_patient INT;
+BEGIN
+--Calcul de l'age du patient
+    v_age_patient := TRUNC(MONTHS_BETWEEN(SYSDATE, :NEW.DDN_Patient) / 12);
+
+    IF (v_age_patient < 18 OR v_age_patient > 65) THEN
+        IF INSERTING THEN
+            RAISE_APPLICATION_ERROR(-20010, 'Problème d''âge : Le patient ne répond pas aux critères d''âge.');
+        END IF;
+        
+        IF UPDATING THEN
+            DELETE FROM PATIENT WHERE Id_Patient = :OLD.Id_Patient;
+            RAISE_APPLICATION_ERROR(-20020, 'Problème d''âge : Le patient ne répond pas aux critères d''âge et a été supprimé.');
+        END IF;
+    END IF;
+
+    IF (:NEW.OBESITE = 1 AND :NEW.HYPERTENSION = 1) THEN
+        IF INSERTING THEN
+            RAISE_APPLICATION_ERROR(-20030, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut pas être inclus.');
+        END IF;
+        
+        IF UPDATING THEN
+            DELETE FROM PATIENT WHERE Id_Patient = :OLD.Id_Patient;
+            RAISE_APPLICATION_ERROR(-20040, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut plus être inclus et a été supprimé.');
+        END IF;
+    END IF;
+END Insertion_Patient_Exclusion;
+/

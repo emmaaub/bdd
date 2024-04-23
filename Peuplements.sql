@@ -73,12 +73,14 @@ END Peuplement_patient;
 
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_PATIENT DISABLE;
-CALL Peuplement_patient('Richard', 'Malade', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 1, 1, 1, 1, 'PP', 3);
+CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2014-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1, 'PP', 3);
 
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT INTERVALLES SANG ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
+ALTER TABLE Intervalles_resultats_sang_ana add constraint Nom_Type_Analyse
+check (Type_Analyse in ('Cholesterol','Glycemie','Plaquettes','4','5','6'));
 
 CREATE OR REPLACE PROCEDURE Intervalles_resultats_sang_peuplement(
 p_type_analyse varchar2,
@@ -139,6 +141,8 @@ CALL Peuplement_Analyse_Sang (2, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT ANALYSE PCR COVID ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
+alter table PCR_Covid_Analyse add constraint Nom_Resultats_PCR_Covid
+check (Resultat_PCR_Covid in ('Negatif','Variant alpha detecte','Variant delta detecte','Variant omega detecte'));
 
 CREATE OR REPLACE PROCEDURE Peuplement_PCR_COVID (
     p_id_patient INT,
@@ -163,4 +167,35 @@ ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
 
 CALL Peuplement_PCR_Covid (2, SYSDATE, 'Negatif');
+
+--##########################################################################################################################################################################################################
+--################### PEUPLEMENT ANALYSE EFFORT ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
+CREATE OR REPLACE PROCEDURE Peuplement_Analyse_Effort(
+   PID_PATIENT NUMBER,
+   PDATE_ANALYSE_EFFORT DATE,
+   PCOMPLEMENTAIRE_EFFORT NUMBER,
+   PRESULTAT_AVANT_BPM NUMBER,
+   PRESULTAT_APRES_BPM NUMBER,
+   PRESULTAT_UNEMIN_BPM NUMBER)
+AS
+    id_pat int;
+BEGIN
+    SELECT Id_Patient INTO id_pat FROM Patient WHERE Id_Patient = PID_PATIENT;
+    
+    INSERT INTO Effort_Analyse (ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
+    VALUES (id_pat, PDATE_ANALYSE_EFFORT, PCOMPLEMENTAIRE_EFFORT, PRESULTAT_AVANT_BPM, PRESULTAT_APRES_BPM, PRESULTAT_UNEMIN_BPM);
+    
+END Peuplement_Analyse_Effort;
+/
+
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDDELETETRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
+DELETE FROM EFFORT_ANALYSE;
+
+CALL Peuplement_Analyse_Effort (46, SYSDATE, 0, 100, 100, 100);
+/
 
