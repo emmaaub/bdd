@@ -40,7 +40,7 @@ END Peuplement_Medecin;
 /
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_MEDECIN DISABLE;
-CALL Peuplement_Medecin (123456788, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
+CALL Peuplement_Medecin (123456789, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
 
 
 --##########################################################################################################################################################################################################
@@ -57,23 +57,21 @@ CREATE OR REPLACE PROCEDURE Peuplement_patient (
     Pgrippe int,
     Pcovid int,
     Phypertension int,
-    Pobesite int,
-    Pgroupe varchar2,
-    Psousgroupe int)
+    Pobesite int)
 AS
 PNumADELIM int;
 BEGIN
-    SELECT Num_ADELI_Medecin INTO PNumADELIM FROM Medecin WHERE Num_ADELI_Medecin = 123456788;
+    SELECT Num_ADELI_Medecin INTO PNumADELIM FROM Medecin WHERE Num_ADELI_Medecin = 123456789;
     
-    INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
-    VALUES (PNumADELIM, Pnom, PPrenom, Psexe, PDDN, PNumSecu, Pmeno, Pgrippe, Pcovid, Phypertension, Pobesite, Pgroupe, Psousgroupe);
+    INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite)
+    VALUES (PNumADELIM, Pnom, PPrenom, Psexe, PDDN, PNumSecu, Pmeno, Pgrippe, Pcovid, Phypertension, Pobesite);
     COMMIT;
 END Peuplement_patient;
 /
 
-
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_PATIENT DISABLE;
-CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2014-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1, 'PP', 3);
+
+CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2001-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1);
 
 
 --##########################################################################################################################################################################################################
