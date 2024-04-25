@@ -249,6 +249,7 @@ BEGIN
 END Insertion_Patient_Exclusion;
 /
 
+drop trigger RandomizeGroupAndSubgroupVersionHaute;
 --####################################################################################################################################
 --###################################### RANDOMISATION PATIENT ###########################################################
 --####################################################################################################################################
@@ -415,27 +416,214 @@ alter table Lots
 --####################################################################################################################################
 --###################################### Automatisation remplissage numéro de lot ###########################################################
 --####################################################################################################################################
-create or replace trigger  before insert or update on 
+create or replace trigger Remplissage_plan_de_prise_medoc after insert or update on Patient
 for each row
 declare
-    POBESITE NUMBER;
-    PHYPERTENSION NUMBER;
-    PMENOPAUSE NUMBER;
-    DATE_PRO_ANALYSE date;
-begin
+    duree_etude integer; 
+    v_num_lot LOTS.NUMERO_LOT%TYPE;
+    v_type_lot LOTS.TYPE_LOT%TYPE;
+BEGIN
+    duree_etude:= 15; 
+    -- Déterminer le type de lot en fonction du groupe et du sous-groupe du nouveau patient
+IF :NEW.TYPE_GROUPE = 'PP' THEN
 
+         v_type_lot := 'PP';
+         FOR nb_jours IN 1..duree_etude LOOP -- Supposons une étude d'une durée maximale de 31 jours
+            if nb_jours <10 then 
+            v_num_lot := :NEW.ID_PATIENT || LPAD(nb_jours, 2, '0');
+            else 
+            v_num_lot := :NEW.ID_PATIENT || nb_jours;
+            end if;
+            
+            INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+        END LOOP;
+        
+ELSIF :NEW.TYPE_GROUPE = 'TV' THEN
+    
+         IF :NEW.TYPE_SOUS_GROUPE = 1 THEN
+         
+            v_type_lot := 'TV';
+            FOR nb_jours IN 1..duree_etude LOOP -- Supposons une étude d'une durée maximale de 31 jours
+                if nb_jours <10 then 
+                    v_num_lot := :NEW.ID_PATIENT || LPAD(nb_jours, 2, '0');
+                else 
+                    v_num_lot := :NEW.ID_PATIENT || nb_jours;
+                end if;
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+            END LOOP;
+        
+        ELSIF :NEW.TYPE_SOUS_GROUPE = 2 THEN
+        
+        FOR jour_etude IN 1..duree_etude LOOP
+            IF MOD(jour_etude, 2) = 0 THEN
+                v_type_lot := 'PP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+                
+            ELSIF MOD(jour_etude, 2) <> 0 THEN
+                v_type_lot := 'TV';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+            end if;
+        end loop;
+        
+        ELSIF :NEW.TYPE_SOUS_GROUPE = 3 THEN
+        
+            FOR jour_etude IN 1..duree_etude LOOP
+                IF MOD(jour_etude, 3) = 0 THEN
+                    v_type_lot := 'TV';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                    INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+                    
+                ELSE
+                    v_type_lot := 'PP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                    INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+               end if;
+            end loop;
+        end if;
+        
+        
+ELSIF :NEW.TYPE_GROUPE = 'TP' THEN
+  
+        IF :NEW.TYPE_SOUS_GROUPE = 1 THEN
+         
+            v_type_lot := 'TP';
+            FOR nb_jours IN 1..duree_etude LOOP -- Supposons une étude d'une durée maximale de 31 jours
+                if nb_jours <10 then 
+                    v_num_lot := :NEW.ID_PATIENT || LPAD(nb_jours, 2, '0');
+                else 
+                    v_num_lot := :NEW.ID_PATIENT || nb_jours;
+                end if;
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+            END LOOP;
+        
+        ELSIF :NEW.TYPE_SOUS_GROUPE = 2 THEN
+        
+        FOR jour_etude IN 1..duree_etude LOOP
+            IF MOD(jour_etude, 2) = 0 THEN
+                v_type_lot := 'PP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+                
+            ELSIF MOD(jour_etude, 2) <> 0 THEN
+                v_type_lot := 'TP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+            end if;
+        end loop;
+        
+        ELSIF :NEW.TYPE_SOUS_GROUPE = 3 THEN
+        
+            FOR jour_etude IN 1..duree_etude LOOP
+                IF MOD(jour_etude, 3) = 0 THEN
+                    v_type_lot := 'TP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                    INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+                    
+                ELSE
+                    v_type_lot := 'PP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                    INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+               end if;
+            end loop;  
+        end if;
+        
+ELSIF :NEW.TYPE_GROUPE = 'VP' THEN
+        
+    IF :NEW.TYPE_SOUS_GROUPE = 1 THEN
+            v_type_lot := 'VP';
+            FOR nb_jours IN 1..duree_etude LOOP -- Supposons une étude d'une durée maximale de 31 jours
+                if nb_jours <10 then 
+                    v_num_lot := :NEW.ID_PATIENT || LPAD(nb_jours, 2, '0');
+                else 
+                    v_num_lot := :NEW.ID_PATIENT || nb_jours;
+                end if;
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+            END LOOP;
+        
+        ELSIF :NEW.TYPE_SOUS_GROUPE = 2 THEN
+        
+        FOR jour_etude IN 1..duree_etude LOOP
+            IF MOD(jour_etude, 2) = 0 THEN
+                v_type_lot := 'PP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+                
+            ELSIF MOD(jour_etude, 2) <> 0 THEN
+                v_type_lot := 'VP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+            end if;
+        end loop;
+        
+        ELSIF :NEW.TYPE_SOUS_GROUPE = 3 THEN
+        
+            FOR jour_etude IN 1..duree_etude LOOP
+                IF MOD(jour_etude, 3) = 0 THEN
+                    v_type_lot := 'VP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                    INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+                    
+                ELSE
+                    v_type_lot := 'PP';
+                    if jour_etude <10 then 
+                        v_num_lot := :NEW.ID_PATIENT || LPAD(jour_etude, 2, '0');
+                    else 
+                        v_num_lot := :NEW.ID_PATIENT || jour_etude;
+                    end if;        
+                    INSERT INTO LOTS(NUMERO_LOT, TYPE_LOT) VALUES (v_num_lot, v_type_lot);
+               end if;
+            end loop;
+        END IF;        
+END IF;
 
-
-
-
-
-
-
-
-
-
-
-
+END;
+/
 
 
 --####################################################################################################################################
