@@ -416,7 +416,7 @@ alter table Lots
 --####################################################################################################################################
 --###################################### Automatisation remplissage numéro de lot ###########################################################
 --####################################################################################################################################
-create or replace trigger Remplissage_plan_de_prise_medoc after insert or update on Patient
+create or replace trigger Remplissage_plan_de_prise_medoc after insert on Patient
 for each row
 declare
     duree_etude integer; 
@@ -639,5 +639,71 @@ begin
     select IDTest.nextval into :new.ID_TEST from dual;
 end;
 /
+
+
+
+
+
+
+--####################################################################################################################################
+--###################################### Verification lot administré ###########################################################
+--####################################################################################################################################
+
+
+create or replace trigger verif_existance_lot_administre before insert or update on VISITE_QUOTIDIENNE
+FOR EACH ROW
+DECLARE
+    v_lot_exists NUMBER;
+begin 
+    -- Vérifier si le numéro de lot existe dans la table LOTS
+    SELECT COUNT(*) INTO v_lot_exists
+    FROM LOTS
+    WHERE NUMERO_LOT = :NEW.NUMERO_LOT;
+    -- Si le numéro de lot n'existe pas, déclencher une exception
+    IF v_lot_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Le numéro de lot spécifié n''existe pas dans la table LOTS.');
+    END IF;
+end ;
+/
+
+--####################################################################################################################################
+--###################################### Verification si meme type de lot en cas d'erreur ###########################################################
+--####################################################################################################################################
+
+CREATE OR REPLACE TRIGGER verif_lot_administre 
+after INSERT OR UPDATE ON VISITE_QUOTIDIENNE 
+FOR EACH ROW 
+DECLARE
+    p_chi NUMBER;
+    d_chi NUMBER;
+    v_type_lot_mauvais LOTS.TYPE_LOT%TYPE;
+    prediction_lot NUMBER; -- Garder prediction_lot comme un nombre
+    v_type_lot_prevu LOTS.TYPE_LOT%TYPE;
+BEGIN
+    -- Extraction des quatre premiers chiffres
+    p_chi := TRUNC(:new.numero_lot / 100); -- Supprime les deux derniers chiffres
+    -- Extraction des deux derniers chiffres (similaire aux exemples précédents)
+    d_chi := MOD(:new.numero_lot, 100);
+    
+    -- Recherche du type de lot administré
+    SELECT type_lot INTO v_type_lot_mauvais FROM Lots WHERE numero_lot = :new.numero_lot;
+    
+    -- Prédiction du type de lot qu'aurait dû prendre le patient
+    prediction_lot := :NEW.Id_Patient * 100 + :new.jour_etude; -- Concaténation correcte pour obtenir le numéro de lot
+    
+    -- Sélection du type de lot prévu
+    SELECT type_lot INTO v_type_lot_prevu FROM Lots WHERE numero_lot = prediction_lot;
+    
+    -- Vérification si le lot administré correspond au lot prévu
+    IF v_type_lot_prevu <> v_type_lot_mauvais THEN
+        -- Mise à jour des informations du patient
+        UPDATE PATIENT SET date_fin_inclusion = SYSDATE, motif_fin_inclusion = 'Erreur d administration durant l essai' WHERE ID_PATIENT = :NEW.Id_Patient;
+    END IF;
+END;
+/
+
+
+
+
 
 

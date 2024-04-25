@@ -301,7 +301,7 @@ END Peuplement_Visite_Quotidienne;
 
 call Peuplement_Visite_Quotidienne(135790246, 1050, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
 call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
-call Peuplement_Visite_Quotidienne(135790246, 102, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 6408, 66, 123456789, SYSDATE, 100, 13, 90, 37, 1, 8);
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
  
