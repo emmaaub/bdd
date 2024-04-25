@@ -272,7 +272,10 @@ CALL Peuplement_Lots (000104, 'TV');
 
 -----------------------EN COURS ------------------------------------------------------
 CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
-    p_num_lot number,
+    p_num_aux INTEGER,
+    p_num_lot integer,
+   p_id_patient INTEGER,
+   p_num_medecin integer,
     p_date_visite date,
     p_poids number, 
     p_pression_arte number, 
@@ -281,16 +284,12 @@ CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
     p_deb_jour number, 
     p_j_etude number
 )
-As
-   p_num_aux INTEGER;
-   p_id_patient INTEGER;
-   p_num_medecin integer;
-   
+As 
 BEGIN
    --FOR i IN 1..3 LOOP 
-        SELECT Num_adeli_auxiliaire INTO p_num_aux FROM Auxiliaire WHERE Num_adeli_auxiliaire = 135790246;
-        SELECT id_patient INTO p_id_patient FROM Patient WHERE Id_Patient = 1;
-        SELECT Num_adeli_medecin INTO p_num_medecin FROM Medecin WHERE Num_adeli_medecin = 123456789;
+        --SELECT Num_adeli_auxiliaire INTO p_num_aux FROM Auxiliaire WHERE Num_adeli_auxiliaire = 135790246;
+        --SELECT id_patient INTO p_id_patient FROM Patient WHERE Id_Patient = 1;
+        --SELECT Num_adeli_medecin INTO p_num_medecin FROM Medecin WHERE Num_adeli_medecin = 123456789;
         --SELECT Numero_lot INTO p_num_lot FROM Lots WHERE Numero_lot = 101;
       -- Insertion des données dans la table
       INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
@@ -300,7 +299,9 @@ BEGIN
 END Peuplement_Visite_Quotidienne;
 /
 
-call Peuplement_Visite_Quotidienne(107, SYSDATE, 100, 13, 90, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 1050, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 102, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
  
