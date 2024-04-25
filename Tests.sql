@@ -527,4 +527,58 @@ END;
 /
 call TestRandomisationAge();
 
+--##########################################################################################################################################################################################################
+--################### TESTS TABLE VISITE QUOTIDIENNE ET LOT ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
+CREATE OR REPLACE PROCEDURE test_verif_existance_lot_administre AS
+    v_lot_exists NUMBER;
+BEGIN
+    -- Démarrer une transaction
+    BEGIN
+        -- Insertion d'un numéro de lot existant
+        INSERT INTO LOTS (NUMERO_LOT, TYPE_LOT) VALUES (123401, 'PP');
+        
+        -- Insertion d'une visite quotidienne avec un numéro de lot existant
+        INSERT INTO VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE, NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, COMMENTAIRE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+        VALUES (1, 123456, 123401, 1234, 654321, SYSDATE, 70, 120, 80, 37, 'Aucun commentaire', 1, 1);
+
+        -- Vérification si le numéro de lot existe dans la table LOTS
+        SELECT COUNT(*) INTO v_lot_exists
+        FROM LOTS
+        WHERE NUMERO_LOT = 123401;
+        
+        -- Insertion du résultat du test dans la table TESTS_BDD
+        IF v_lot_exists = 1 THEN
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test existence numéro de lot', 'Réussi');
+        ELSE
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test existence numéro de lot', 'Échoué');
+        END IF;
+        
+        -- Rollback pour annuler les modifications effectuées dans la transaction
+        ROLLBACK;
+    END;
+
+    -- Démarrer une nouvelle transaction
+    BEGIN
+        -- Tentative d'insertion avec un numéro de lot inexistant
+        BEGIN
+            INSERT INTO VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE, NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, COMMENTAIRE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+            VALUES (2, 123456, 999999, 1234, 654321, SYSDATE, 70, 120, 80, 37, 'Aucun commentaire', 1, 1);
+            -- Si l'insertion réussit, afficher un message d'erreur
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test insertion avec numéro de lot inexistant', 'Échoué');
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Si une erreur est déclenchée, afficher un message de succès
+                INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test insertion avec numéro de lot inexistant', 'Réussi');
+        END;
+        -- Rollback pour annuler les modifications effectuées dans la transaction
+        ROLLBACK;
+    END;
+END;
+/
+call TEST_VERIF_EXISTANCE_LOT_ADMINISTRE();
+
+
+
 
