@@ -598,11 +598,11 @@ create index SUIVI_PATIENT_FK on LIGNE_CARNET_MEDICAL (
 /*==============================================================*/
 /* Table : LOTS                                                 */
 /*==============================================================*/
-create table LOTS (
+CREATE TABLE LOTS (
    NUMERO_LOT           NUMBER(6)             not null,
    TYPE_LOT             VARCHAR2(1024)        not null,
-   constraint PK_LOTS primary key (NUMERO_LOT)
-)
+   CONSTRAINT PK_LOTS PRIMARY KEY (NUMERO_LOT)
+);
 /
 
 /*==============================================================*/

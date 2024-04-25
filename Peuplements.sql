@@ -11,7 +11,7 @@ END Peuplement_Centre;
 /
 call Peuplement_Centre();
 
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_CENTRE_E DISABLE;
+--ALTER TRIGGER COMPOUNDINSERTTRIGGER_CENTRE_E DISABLE;
 --##################################################################################################################################################################################
 --################### PEUPLEMENT ARC ##########################################################################################################################################################
 --##################################################################################################################################################################################
@@ -220,41 +220,6 @@ DELETE FROM EFFORT_ANALYSE;
 CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
 /
 
---##########################################################################################################################################################################################################
---################### PEUPLEMENT VISITE QUOTIDIENNE ###########################################################################################################################################################################
---##########################################################################################################################################################################################################
-
------------------------EN COURS ------------------------------------------------------
-CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne
-As
-   v_num_visite INTEGER;
-BEGIN
-   FOR i IN 1..100 LOOP -- Peupler avec 100 visites quotidiennes fictives
-      -- Génération d'un ID de visite
-      SELECT SEQ_VISITE_QUOTIDIENNE.NEXTVAL INTO v_num_visite FROM DUAL;
-
-      -- Insertion des données dans la table
-      INSERT INTO VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE, NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
-      VALUES (v_num_visite, 
-              TRUNC(DBMS_RANDOM.VALUE(100000, 999999)), -- NUM_ADELI_AUXILIAIRE
-              TRUNC(DBMS_RANDOM.VALUE(100000, 999999)), -- NUMERO_LOT
-              TRUNC(DBMS_RANDOM.VALUE(1000, 9999)),     -- ID_PATIENT
-              TRUNC(DBMS_RANDOM.VALUE(100000, 999999)), -- NUM_ADELI_MEDECIN
-              
-              SYSDATE, -- DATE_VISITE_QUOTIDIENNE 
-              DBMS_RANDOM.VALUE(40, 120),  -- POIDS (en kg)
-              DBMS_RANDOM.VALUE(70, 200),  -- PRESSION_ARTERIELLE (en mmHg)
-              DBMS_RANDOM.VALUE(50, 100),  -- RYTHME_CARDIAQUE (en bpm)
-              DBMS_RANDOM.VALUE(35, 40),   -- TEMPERATURE (en degrés Celsius)
-              TRUNC(DBMS_RANDOM.VALUE(0, 1)),  -- DEBUT_DE_JOURNEE (0 ou 1)
-              1)   -- JOUR_ETUDE (1 à 7)
-             );
-   END LOOP;
-   
-END Peuplement_Visite_Quotidienne;
-/
-
-
 --######################################################################################################################
 --######################### PEUPLEMENT AUXILIAIRE ######################################################################
 --######################################################################################################################
@@ -281,5 +246,62 @@ CALL Peuplement_Auxiliaire (135790246, 'infirmier','Lefevre', 'Sophie');
 CALL Peuplement_Auxiliaire (135791113, 'infirmier','Dubois', 'Edouard');
 CALL Peuplement_Auxiliaire (151719212, 'kinesitherapeuthe','Moulin', 'Jean');
 
+--######################################################################################################################
+--######################### PEUPLEMENT LOTS ######################################################################
+--######################################################################################################################
 
+CREATE OR REPLACE PROCEDURE Peuplement_Lots (
+    p_num_lot INT,
+    p_type_lot VARCHAR2)
+AS
+BEGIN
+    INSERT INTO LOTS (NUMERO_LOT, TYPE_LOT)
+    VALUES (p_num_lot, p_type_lot);
+    COMMIT;
+END Peuplement_Lots;
+/
+
+CALL Peuplement_Lots (000101, 'TV');
+CALL Peuplement_Lots (000102, 'PP');
+CALL Peuplement_Lots (000103, 'PP');
+CALL Peuplement_Lots (000104, 'TV');
+
+--##########################################################################################################################################################################################################
+--################### PEUPLEMENT VISITE QUOTIDIENNE ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
+-----------------------EN COURS ------------------------------------------------------
+CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
+    p_num_lot number,
+    p_date_visite date,
+    p_poids number, 
+    p_pression_arte number, 
+    p_rythme_cardiaque number,  
+    p_temperature number, 
+    p_deb_jour number, 
+    p_j_etude number
+)
+As
+   p_num_aux INTEGER;
+   p_id_patient INTEGER;
+   p_num_medecin integer;
+   
+BEGIN
+   --FOR i IN 1..3 LOOP 
+        SELECT Num_adeli_auxiliaire INTO p_num_aux FROM Auxiliaire WHERE Num_adeli_auxiliaire = 135790246;
+        SELECT id_patient INTO p_id_patient FROM Patient WHERE Id_Patient = 1;
+        SELECT Num_adeli_medecin INTO p_num_medecin FROM Medecin WHERE Num_adeli_medecin = 123456789;
+        --SELECT Numero_lot INTO p_num_lot FROM Lots WHERE Numero_lot = 101;
+      -- Insertion des données dans la table
+      INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+      VALUES (p_num_aux, p_num_lot, p_id_patient, p_num_medecin, p_date_visite, p_poids, p_pression_arte, p_rythme_cardiaque,  p_temperature, p_deb_jour, p_j_etude);
+   --END LOOP;
+   
+END Peuplement_Visite_Quotidienne;
+/
+
+call Peuplement_Visite_Quotidienne(107, SYSDATE, 100, 13, 90, 37, 1, 2);
+
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
+ 
 
