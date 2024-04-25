@@ -423,3 +423,33 @@ declare
     PMENOPAUSE NUMBER;
     DATE_PRO_ANALYSE date;
 begin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--####################################################################################################################################
+--###################################### Automatisation ID_Test ###########################################################
+--####################################################################################################################################
+
+drop sequence IDTest;
+create sequence IDTest;
+
+create or replace trigger ValeurIDTest
+before insert on TESTS_BDD for each row
+begin
+    select IDTest.nextval into :new.ID_TEST from dual;
+end;
+/
+
+
