@@ -185,28 +185,12 @@ alter table ACTE_MEDICAL_CARNET_MEDICAL
    drop constraint FK_ACTE_MED_TRAITER_P_LIGNE_CA
 /
 
-alter table ADMINISTRATION_LOT
-   drop constraint FK_ADMINIST_ADMINISTR_VISITE_Q
-/
-
-alter table ADMINISTRATION_LOT
-   drop constraint FK_ADMINIST_ADMINISTR_LOTS
-/
-
 alter table ARC
    drop constraint FK_ARC_ARCCENTRE_CENTRE_E
 /
 
 alter table AUXILIAIRE
    drop constraint FK_AUXILIAI_AUXILIAIR_CENTRE_E
-/
-
-alter table AUXILIAIRE_VISITE_TRACABILITE
-   drop constraint FK_AUXILIAI_AUXILIAIR_AUXILIAI
-/
-
-alter table AUXILIAIRE_VISITE_TRACABILITE
-   drop constraint FK_AUXILIAI_AUXILIAIR_VISITE_Q
 /
 
 alter table CENTRE_EC
@@ -253,16 +237,20 @@ alter table SANG_ANALYSE
    drop constraint FK_SANG_ANA_ANALYSE_S_PATIENT
 /
 
-alter table TRACABILITE_MEDECIN_VISITE
-   drop constraint FK_TRACABIL_TRACABILI_MEDECIN
-/
-
-alter table TRACABILITE_MEDECIN_VISITE
-   drop constraint FK_TRACABIL_TRACABILI_VISITE_Q
-/
-
 alter table TRAITEMENT_PATHOLOGIE_CARNET_M
    drop constraint FK_TRAITEME_MEDICAMEN_LIGNE_CA
+/
+
+alter table VISITE_QUOTIDIENNE
+   drop constraint FK_VISITE_Q_ADMINISTR_LOTS
+/
+
+alter table VISITE_QUOTIDIENNE
+   drop constraint FK_VISITE_Q_AUXILIAIR_AUXILIAI
+/
+
+alter table VISITE_QUOTIDIENNE
+   drop constraint FK_VISITE_Q_TRACABILI_MEDECIN
 /
 
 alter table VISITE_QUOTIDIENNE
@@ -275,15 +263,6 @@ drop index TRAITER_PAR_ACTE_FK
 drop table ACTE_MEDICAL_CARNET_MEDICAL cascade constraints
 /
 
-drop index ADMINISTRATION_LOT2_FK
-/
-
-drop index ADMINISTRATION_LOT_FK
-/
-
-drop table ADMINISTRATION_LOT cascade constraints
-/
-
 drop index CENTRE_ARC_FK
 /
 
@@ -294,15 +273,6 @@ drop index CENTRE_AUXILIAIRE_FK
 /
 
 drop table AUXILIAIRE cascade constraints
-/
-
-drop index TRACABILITE_AUXILIAIRE_VISITE2
-/
-
-drop index TRACABILITE_AUXILIAIRE_VISITE_
-/
-
-drop table AUXILIAIRE_VISITE_TRACABILITE cascade constraints
 /
 
 drop index CENTRE_ARC2_FK
@@ -374,19 +344,19 @@ drop table SANG_ANALYSE cascade constraints
 drop table TESTS_BDD cascade constraints
 /
 
-drop index TRACABILITE_MEDECIN_VISITE2_FK
+drop index TRAITER_PATHOLOGIE_FK
+/
+
+drop table TRAITEMENT_PATHOLOGIE_CARNET_M cascade constraints
 /
 
 drop index TRACABILITE_MEDECIN_VISITE_FK
 /
 
-drop table TRACABILITE_MEDECIN_VISITE cascade constraints
+drop index AUXILIAIRE_VISITE_TRACABILITE_
 /
 
-drop index TRAITER_PATHOLOGIE_FK
-/
-
-drop table TRAITEMENT_PATHOLOGIE_CARNET_M cascade constraints
+drop index ADMINISTRATION_LOT_FK
 /
 
 drop index VISITE_PATIENT_FK
@@ -460,16 +430,7 @@ order
 
 create sequence AI_VISITE_QUOTIDIENNE
 /
-drop sequence AI_TESTS
-/
-create sequence AI_TESTS
-increment by 1
-start with 1
- nomaxvalue
- nominvalue
- nocache
-order
-/
+
 /*==============================================================*/
 /* Table : ACTE_MEDICAL_CARNET_MEDICAL                          */
 /*==============================================================*/
@@ -489,32 +450,6 @@ create table ACTE_MEDICAL_CARNET_MEDICAL (
 /*==============================================================*/
 create index TRAITER_PAR_ACTE_FK on ACTE_MEDICAL_CARNET_MEDICAL (
    ID_CARNET_MEDICAL ASC
-)
-/
-
-/*==============================================================*/
-/* Table : ADMINISTRATION_LOT                                   */
-/*==============================================================*/
-create table ADMINISTRATION_LOT (
-   ID_VISITE_QUOTIDIENNE NUMBER                not null,
-   NUMERO_LOT           NUMBER(6)             not null,
-   constraint PK_ADMINISTRATION_LOT primary key (ID_VISITE_QUOTIDIENNE, NUMERO_LOT)
-)
-/
-
-/*==============================================================*/
-/* Index : ADMINISTRATION_LOT_FK                                */
-/*==============================================================*/
-create index ADMINISTRATION_LOT_FK on ADMINISTRATION_LOT (
-   ID_VISITE_QUOTIDIENNE ASC
-)
-/
-
-/*==============================================================*/
-/* Index : ADMINISTRATION_LOT2_FK                               */
-/*==============================================================*/
-create index ADMINISTRATION_LOT2_FK on ADMINISTRATION_LOT (
-   NUMERO_LOT ASC
 )
 /
 
@@ -560,36 +495,11 @@ create index CENTRE_AUXILIAIRE_FK on AUXILIAIRE (
 /
 
 /*==============================================================*/
-/* Table : AUXILIAIRE_VISITE_TRACABILITE                        */
-/*==============================================================*/
-create table AUXILIAIRE_VISITE_TRACABILITE (
-   NUM_ADELI_AUXILIAIRE NUMBER                not null,
-   ID_VISITE_QUOTIDIENNE NUMBER                not null,
-   constraint PK_AUXILIAIRE_VISITE_TRACABILI primary key (NUM_ADELI_AUXILIAIRE, ID_VISITE_QUOTIDIENNE)
-)
-/
-
-/*==============================================================*/
-/* Index : TRACABILITE_AUXILIAIRE_VISITE_                       */
-/*==============================================================*/
-create index TRACABILITE_AUXILIAIRE_VISITE_ on AUXILIAIRE_VISITE_TRACABILITE (
-   NUM_ADELI_AUXILIAIRE ASC
-)
-/
-
-/*==============================================================*/
-/* Index : TRACABILITE_AUXILIAIRE_VISITE2                       */
-/*==============================================================*/
-create index TRACABILITE_AUXILIAIRE_VISITE2 on AUXILIAIRE_VISITE_TRACABILITE (
-   ID_VISITE_QUOTIDIENNE ASC
-)
-/
-
-/*==============================================================*/
 /* Table : CENTRE_EC                                            */
 /*==============================================================*/
 create table CENTRE_EC (
    ID_CENTRE_EC         NUMBER                not null,
+   NOM_CENTRE           VARCHAR2(1024),
    constraint PK_CENTRE_EC primary key (ID_CENTRE_EC)
 )
 /
@@ -748,10 +658,11 @@ create table PATIENT (
       constraint CKC_HYPERTENSION_PATIENT check (HYPERTENSION in (0,1)),
    OBESITE              NUMBER                not null
       constraint CKC_OBESITE_PATIENT check (OBESITE in (0,1)),
-   TYPE_GROUPE          VARCHAR2(2)           not null,
-   TYPE_SOUS_GROUPE     NUMBER                not null,
+   TYPE_GROUPE          VARCHAR2(2),
+   TYPE_SOUS_GROUPE     NUMBER,
    DATE_FIN_INCLUSION   DATE,
    MOTIF_FIN_INCLUSION  CLOB,
+   ATTRIBUT_93          CHAR(10),
    constraint PK_PATIENT primary key (ID_PATIENT)
 )
 /
@@ -851,32 +762,6 @@ create table TESTS_BDD (
 /
 
 /*==============================================================*/
-/* Table : TRACABILITE_MEDECIN_VISITE                           */
-/*==============================================================*/
-create table TRACABILITE_MEDECIN_VISITE (
-   NUM_ADELI_MEDECIN    NUMBER                not null,
-   ID_VISITE_QUOTIDIENNE NUMBER                not null,
-   constraint PK_TRACABILITE_MEDECIN_VISITE primary key (NUM_ADELI_MEDECIN, ID_VISITE_QUOTIDIENNE)
-)
-/
-
-/*==============================================================*/
-/* Index : TRACABILITE_MEDECIN_VISITE_FK                        */
-/*==============================================================*/
-create index TRACABILITE_MEDECIN_VISITE_FK on TRACABILITE_MEDECIN_VISITE (
-   NUM_ADELI_MEDECIN ASC
-)
-/
-
-/*==============================================================*/
-/* Index : TRACABILITE_MEDECIN_VISITE2_FK                       */
-/*==============================================================*/
-create index TRACABILITE_MEDECIN_VISITE2_FK on TRACABILITE_MEDECIN_VISITE (
-   ID_VISITE_QUOTIDIENNE ASC
-)
-/
-
-/*==============================================================*/
 /* Table : TRAITEMENT_PATHOLOGIE_CARNET_M                       */
 /*==============================================================*/
 create table TRAITEMENT_PATHOLOGIE_CARNET_M (
@@ -903,7 +788,10 @@ create index TRAITER_PATHOLOGIE_FK on TRAITEMENT_PATHOLOGIE_CARNET_M (
 /*==============================================================*/
 create table VISITE_QUOTIDIENNE (
    ID_VISITE_QUOTIDIENNE NUMBER                not null,
+   NUM_ADELI_AUXILIAIRE NUMBER                not null,
+   NUMERO_LOT           NUMBER(6)             not null,
    ID_PATIENT           NUMBER                not null,
+   NUM_ADELI_MEDECIN    NUMBER                not null,
    DATE_VISITE_QUOTIDIENNE DATE                  not null,
    POIDS                NUMBER,
    PRESSION_ARTERIELLE  NUMBER                not null,
@@ -924,19 +812,33 @@ create index VISITE_PATIENT_FK on VISITE_QUOTIDIENNE (
 )
 /
 
+/*==============================================================*/
+/* Index : ADMINISTRATION_LOT_FK                                */
+/*==============================================================*/
+create index ADMINISTRATION_LOT_FK on VISITE_QUOTIDIENNE (
+   NUMERO_LOT ASC
+)
+/
+
+/*==============================================================*/
+/* Index : AUXILIAIRE_VISITE_TRACABILITE_                       */
+/*==============================================================*/
+create index AUXILIAIRE_VISITE_TRACABILITE_ on VISITE_QUOTIDIENNE (
+   NUM_ADELI_AUXILIAIRE ASC
+)
+/
+
+/*==============================================================*/
+/* Index : TRACABILITE_MEDECIN_VISITE_FK                        */
+/*==============================================================*/
+create index TRACABILITE_MEDECIN_VISITE_FK on VISITE_QUOTIDIENNE (
+   NUM_ADELI_MEDECIN ASC
+)
+/
+
 alter table ACTE_MEDICAL_CARNET_MEDICAL
    add constraint FK_ACTE_MED_TRAITER_P_LIGNE_CA foreign key (ID_CARNET_MEDICAL)
       references LIGNE_CARNET_MEDICAL (ID_CARNET_MEDICAL)
-/
-
-alter table ADMINISTRATION_LOT
-   add constraint FK_ADMINIST_ADMINISTR_VISITE_Q foreign key (ID_VISITE_QUOTIDIENNE)
-      references VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE)
-/
-
-alter table ADMINISTRATION_LOT
-   add constraint FK_ADMINIST_ADMINISTR_LOTS foreign key (NUMERO_LOT)
-      references LOTS (NUMERO_LOT)
 /
 
 alter table ARC
@@ -947,16 +849,6 @@ alter table ARC
 alter table AUXILIAIRE
    add constraint FK_AUXILIAI_AUXILIAIR_CENTRE_E foreign key (ID_CENTRE_EC)
       references CENTRE_EC (ID_CENTRE_EC)
-/
-
-alter table AUXILIAIRE_VISITE_TRACABILITE
-   add constraint FK_AUXILIAI_AUXILIAIR_AUXILIAI foreign key (NUM_ADELI_AUXILIAIRE)
-      references AUXILIAIRE (NUM_ADELI_AUXILIAIRE)
-/
-
-alter table AUXILIAIRE_VISITE_TRACABILITE
-   add constraint FK_AUXILIAI_AUXILIAIR_VISITE_Q foreign key (ID_VISITE_QUOTIDIENNE)
-      references VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE)
 /
 
 alter table CENTRE_EC
@@ -1014,19 +906,24 @@ alter table SANG_ANALYSE
       references PATIENT (ID_PATIENT)
 /
 
-alter table TRACABILITE_MEDECIN_VISITE
-   add constraint FK_TRACABIL_TRACABILI_MEDECIN foreign key (NUM_ADELI_MEDECIN)
-      references MEDECIN (NUM_ADELI_MEDECIN)
-/
-
-alter table TRACABILITE_MEDECIN_VISITE
-   add constraint FK_TRACABIL_TRACABILI_VISITE_Q foreign key (ID_VISITE_QUOTIDIENNE)
-      references VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE)
-/
-
 alter table TRAITEMENT_PATHOLOGIE_CARNET_M
    add constraint FK_TRAITEME_MEDICAMEN_LIGNE_CA foreign key (ID_CARNET_MEDICAL)
       references LIGNE_CARNET_MEDICAL (ID_CARNET_MEDICAL)
+/
+
+alter table VISITE_QUOTIDIENNE
+   add constraint FK_VISITE_Q_ADMINISTR_LOTS foreign key (NUMERO_LOT)
+      references LOTS (NUMERO_LOT)
+/
+
+alter table VISITE_QUOTIDIENNE
+   add constraint FK_VISITE_Q_AUXILIAIR_AUXILIAI foreign key (NUM_ADELI_AUXILIAIRE)
+      references AUXILIAIRE (NUM_ADELI_AUXILIAIRE)
+/
+
+alter table VISITE_QUOTIDIENNE
+   add constraint FK_VISITE_Q_TRACABILI_MEDECIN foreign key (NUM_ADELI_MEDECIN)
+      references MEDECIN (NUM_ADELI_MEDECIN)
 /
 
 alter table VISITE_QUOTIDIENNE
@@ -1117,21 +1014,8 @@ for update on ACTE_MEDICAL_CARNET_MEDICAL compound trigger
 
 END
 /
-create or replace trigger TIB_TESTS before insert on Tests_BDD for each row
-declare
-integrity_error  exception;
-    errno            integer;
-    errmsg           char(200);
-    dummy            integer;
-    found            boolean;
-begin
-select AI_TESTS.NEXTVAL INTO :new.Id_Test from dual;
---  Traitement d'erreurs
-exception
-    when integrity_error then
-       raise_application_error(errno, errmsg);
-end;
-/
+
+
 create trigger TIB_ACTE_MEDICAL_CARNET_MEDICA before insert
 on ACTE_MEDICAL_CARNET_MEDICAL for each row
 declare

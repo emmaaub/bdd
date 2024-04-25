@@ -1,16 +1,35 @@
+--######################################################################################################################
+--######################### PEUPLEMENT CENTRE ESSAIS CLINIQUE ######################################################################
+--######################################################################################################################
+
+CREATE OR REPLACE PROCEDURE Peuplement_Centre
+AS
+BEGIN
+    INSERT INTO CENTRE_EC (NOM_CENTRE) VALUES ('Maragolles');
+    COMMIT;
+END Peuplement_Centre;
+/
+call Peuplement_Centre();
+
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_CENTRE_E DISABLE;
 --##################################################################################################################################################################################
 --################### PEUPLEMENT ARC ##########################################################################################################################################################
 --##################################################################################################################################################################################
 
 CREATE OR REPLACE PROCEDURE Peuplement_ARC(
-    PnomARC varchar2,
-    PprenomARC varchar2
-    )
+    PnomARC VARCHAR2,
+    PprenomARC VARCHAR2
+)
 IS
+    pidcentre INT;
 BEGIN
-INSERT INTO ARC (Nom_ARC, Prenom_ARC)
-    VALUES (PnomARC, PprenomARC);
-    COMMIT;
+    -- Sélectionner l'ID du centre
+    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE Id_centre_ec = 1;
+    
+        -- Insérer dans la table ARC
+        INSERT INTO ARC (ID_CENTRE_EC, Nom_ARC, Prenom_ARC)
+        VALUES (pidcentre, PnomARC, PprenomARC);
+        COMMIT;
 END Peuplement_ARC;
 /
 
@@ -30,10 +49,14 @@ PNomM varchar2,
 PPrenomM varchar2)
 AS
     PIDARC int;
+    pidcentre INT;
 BEGIN
+
+    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE Id_centre_ec = 1;
+    
     SELECT Id_ARC INTO PIDARC FROM ARC WHERE Id_ARC = 1;
-    INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
-    VALUES (PnumADELI, PIDARC, Pspe_med, Pcohorte, PNomM, PPrenomM);
+    INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, ID_CENTRE_EC,Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+    VALUES (PnumADELI, PIDARC, pidcentre,Pspe_med, Pcohorte, PNomM, PPrenomM);
     COMMIT;
     
 END Peuplement_Medecin;
@@ -41,7 +64,7 @@ END Peuplement_Medecin;
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_MEDECIN DISABLE;
 CALL Peuplement_Medecin (123456789, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
-
+CALL Peuplement_Medecin (987654321, 'Generaliste', 2, 'Leroy', 'Geraldine');
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT PATIENT ###########################################################################################################################################################################
@@ -133,7 +156,7 @@ END Peuplement_Analyse_Sang;
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_SANG_ANA DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
 
-CALL Peuplement_Analyse_Sang (2, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
+CALL Peuplement_Analyse_Sang (1, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
 
 
 --##########################################################################################################################################################################################################
@@ -164,7 +187,7 @@ ALTER TRIGGER COMPOUNDINSERTTRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
 
-CALL Peuplement_PCR_Covid (2, SYSDATE, 'Negatif');
+CALL Peuplement_PCR_Covid (1, SYSDATE, 'Negatif');
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT ANALYSE EFFORT ###########################################################################################################################################################################
@@ -194,6 +217,69 @@ ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
 DELETE FROM EFFORT_ANALYSE;
 
-CALL Peuplement_Analyse_Effort (46, SYSDATE, 0, 100, 100, 100);
+CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
 /
+
+--##########################################################################################################################################################################################################
+--################### PEUPLEMENT VISITE QUOTIDIENNE ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
+-----------------------EN COURS ------------------------------------------------------
+CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne
+As
+   v_num_visite INTEGER;
+BEGIN
+   FOR i IN 1..100 LOOP -- Peupler avec 100 visites quotidiennes fictives
+      -- Génération d'un ID de visite
+      SELECT SEQ_VISITE_QUOTIDIENNE.NEXTVAL INTO v_num_visite FROM DUAL;
+
+      -- Insertion des données dans la table
+      INSERT INTO VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE, NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+      VALUES (v_num_visite, 
+              TRUNC(DBMS_RANDOM.VALUE(100000, 999999)), -- NUM_ADELI_AUXILIAIRE
+              TRUNC(DBMS_RANDOM.VALUE(100000, 999999)), -- NUMERO_LOT
+              TRUNC(DBMS_RANDOM.VALUE(1000, 9999)),     -- ID_PATIENT
+              TRUNC(DBMS_RANDOM.VALUE(100000, 999999)), -- NUM_ADELI_MEDECIN
+              
+              SYSDATE, -- DATE_VISITE_QUOTIDIENNE 
+              DBMS_RANDOM.VALUE(40, 120),  -- POIDS (en kg)
+              DBMS_RANDOM.VALUE(70, 200),  -- PRESSION_ARTERIELLE (en mmHg)
+              DBMS_RANDOM.VALUE(50, 100),  -- RYTHME_CARDIAQUE (en bpm)
+              DBMS_RANDOM.VALUE(35, 40),   -- TEMPERATURE (en degrés Celsius)
+              TRUNC(DBMS_RANDOM.VALUE(0, 1)),  -- DEBUT_DE_JOURNEE (0 ou 1)
+              1)   -- JOUR_ETUDE (1 à 7)
+             );
+   END LOOP;
+   
+END Peuplement_Visite_Quotidienne;
+/
+
+
+--######################################################################################################################
+--######################### PEUPLEMENT AUXILIAIRE ######################################################################
+--######################################################################################################################
+
+CREATE OR REPLACE PROCEDURE Peuplement_Auxiliaire (
+    p_num_adeli_aux INT,
+    p_spe_aux VARCHAR2,
+    p_nom_aux VARCHAR2,
+    p_prenom_aux VARCHAR2
+)
+AS
+    pidcentre int;
+BEGIN
+    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE Id_centre_ec = 1;
+    
+    INSERT INTO AUXILIAIRE (NUM_ADELI_AUXILIAIRE, ID_CENTRE_EC, SPECIALITE_AUXILIAIRE, NOM_AUXILIAIRE, PRENOM_AUXILIAIRE)
+    VALUES (p_num_adeli_aux, pidcentre, p_spe_aux, p_nom_aux, p_prenom_aux);
+
+    COMMIT;
+END Peuplement_Auxiliaire;
+/
+
+CALL Peuplement_Auxiliaire (135790246, 'infirmier','Lefevre', 'Sophie');
+CALL Peuplement_Auxiliaire (135791113, 'infirmier','Dubois', 'Edouard');
+CALL Peuplement_Auxiliaire (151719212, 'kinesitherapeuthe','Moulin', 'Jean');
+
+
 
