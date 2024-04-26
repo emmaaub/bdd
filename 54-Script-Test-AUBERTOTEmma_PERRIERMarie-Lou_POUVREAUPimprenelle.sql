@@ -267,8 +267,8 @@ BEGIN
     
     --créer un médecin et sélectionner son id
     INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin) 
-    VALUES (123456789, v_id_arc, 'Generaliste', 1, 'ArmondTestPCR3', 'MichelTestPCR3');
-    SELECT Num_ADELI_Medecin INTO v_num_adeli_medecin FROM Medecin WHERE Nom_Medecin = 'ArmondTestPCR3';
+    VALUES (123456789, v_id_arc, 'Generaliste', 1, 'ArmondTestPCR3Nom', 'MichelTestPCR3');
+    SELECT Num_ADELI_Medecin INTO v_num_adeli_medecin FROM Medecin WHERE Nom_Medecin = 'ArmondTestPCR3Nom';
     
     --créer un patient avec maladie grave et sélectionner son id
     INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
@@ -360,33 +360,6 @@ call Test_Date_Prochaine_Analyse_PCR_ResultatPos();
 --##########################################################################################################################################################################################################
 
 
-CREATE OR REPLACE PROCEDURE TestAutoIncrementation_Effort_Analyse deterministic AS
-    vpremiere_id int;
-    vseconde_id int;
-BEGIN
-    commit;
-    INSERT INTO EFFORT_ANALYSE(ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
-    VALUES (1, SYSDATE, 0, 100, 100, 100);
-    INSERT INTO EFFORT_ANALYSE(ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
-    VALUES (2, SYSDATE, 0, 100, 100, 100);
-    select ID_ANALYSE_EFFORT into vpremiere_id from EFFORT_ANALYSE where ID_PATIENT = 1;
-    select ID_ANALYSE_EFFORT into vseconde_id from EFFORT_ANALYSE where ID_PATIENT = 2;
-    
-    if vpremiere_id = 1 and vseconde_id = 2 then
-        rollback; 
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('TestAutoIncrementation_Effort_Analyse', 'Test réussit') ;
-        commit ; 
-    else
-        rollback;
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('TestAutoIncrementation_Effort_Analyse', 'défaillance') ;
-        commit;
-     end if;
-end;
-/
-
-call TestAutoIncrementation_Effort_Analyse();
-
---------------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE Test_prediction_prochaine_date_Effort_Analyse deterministic AS
     vpremiere_date_analyse date;
     vseconde_date_analyse date;
@@ -510,6 +483,9 @@ CREATE OR REPLACE PROCEDURE TestRandomisationAge deterministic AS
     v_id_arc number;
     v_num_adeli number;
     nbPatient NUMBER;
+    v_id_arc number;
+    v_num_adeli number;
+    
 BEGIN
 
     INSERT INTO ARC (Nom_ARC, Prenom_ARC)
@@ -523,6 +499,7 @@ BEGIN
     FOR i IN 1..10 LOOP
         INSERT INTO PATIENT (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
         VALUES (666666789, 'Rouget', 'Frederic', 'M', TO_DATE('22/03/1970', 'DD-MM-YYYY'), 2122345678912, 1, 1, 1, 0, 0, null, null);
+
     END LOOP;
     select count(*) into nbPatient from PATIENT where NOM_PATIENT = 'Rouget' AND TYPE_GROUPE <> 'PP' AND TYPE_SOUS_GROUPE = 1;
     if nbPatient=0 then
@@ -587,7 +564,11 @@ CREATE OR REPLACE PROCEDURE test_verif_existance_lot_administre_positif AS
             INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test positif existence numéro de lot', 'Échoué');
         END IF;
 END;
+<<<<<<< HEAD
 /
+=======
+
+>>>>>>> ee507d4c780e8a54acec4a359ff0f9f80b7e962d
 call test_verif_existance_lot_administre_positif();
 
 --------------------------------------------------------------------------------------------------------------------------------
@@ -787,4 +768,49 @@ BEGIN
         END IF;    
 END;
 /
+
 call test_Remplissage_plan_de_prise_medoc();
+<<<<<<< HEAD
+=======
+
+-----------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE test_Remplissage_plan_de_prise_medoc AS
+    v_lot_count NUMBER;
+    v_patient_id PATIENT.ID_PATIENT%TYPE;
+BEGIN
+    INSERT INTO centre_ec (Nom_centre)
+    VALUES ('Maragolles');
+    
+    INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+    VALUES (1, 'TestLotExistant', 'Mariline');
+    SELECT ID_ARC INTO v_id_arc FROM ARC WHERE Nom_ARC = 'TestLotExistant';
+
+    INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+    VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+    
+    INSERT INTO PATIENT (NUM_ADELI_MEDECIN, NOM_PATIENT, PRENOM_PATIENT, SEXE_PATIENT, DDN_PATIENT, NUM_SECU_PATIENT, MENOPAUSE, VACCINATIONGRIPPE, VACCINATIONCOVID, HYPERTENSION, OBESITE, TYPE_GROUPE, TYPE_SOUS_GROUPE)
+    VALUES (999888777, 'Nom_Test', 'Prenom_TestRemplissageLot', 'M', '2002-01-19', 202115936027333, 0, 1, 1, 0, 0, 'PP', 1);
+    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'Prenom_TestRemplissageLot';
+
+    -- Vérification si les lots ont été correctement ajoutés à la table LOTS pour le patient ajouté
+    SELECT COUNT(*) INTO v_lot_count FROM LOTS WHERE SUBSTR(NUMERO_LOT, 1, LENGTH(TO_CHAR(v_patient_id))) = TO_CHAR(v_patient_id);
+
+    -- Vérification si les deux derniers chiffres du numéro de lot correspondent bien au jour d'étude
+    FOR lot_row IN (SELECT NUMERO_LOT FROM LOTS WHERE SUBSTR(NUMERO_LOT, 1, LENGTH(TO_CHAR(v_patient_id))) = TO_CHAR(v_patient_id)) LOOP
+        IF TO_NUMBER(SUBSTR(lot_row.NUMERO_LOT, -2)) <> lot_row.RANG_JOUR_ETUDE THEN
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test correspondance jour d\'étude dans le numéro de lot', 'Échoué');
+            RETURN;
+        END IF;
+    END LOOP;
+
+    IF v_lot_count = 15 THEN
+        ROLLBACK;
+        INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test remplissage automatique table lot', 'Réussi');
+    ELSE
+        ROLLBACK;
+        INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test remplissage automatique table lot', 'Échoué');
+    END IF;    
+END;
+
+>>>>>>> ee507d4c780e8a54acec4a359ff0f9f80b7e962d
