@@ -598,11 +598,11 @@ create index SUIVI_PATIENT_FK on LIGNE_CARNET_MEDICAL (
 /*==============================================================*/
 /* Table : LOTS                                                 */
 /*==============================================================*/
-CREATE TABLE LOTS (
+create table LOTS (
    NUMERO_LOT           NUMBER(6)             not null,
    TYPE_LOT             VARCHAR2(1024)        not null,
-   CONSTRAINT PK_LOTS PRIMARY KEY (NUMERO_LOT)
-);
+   constraint PK_LOTS primary key (NUMERO_LOT)
+)
 /
 
 /*==============================================================*/
@@ -646,7 +646,7 @@ create table PATIENT (
    PRENOM_PATIENT       VARCHAR2(1024)        not null,
    SEXE_PATIENT         VARCHAR2(1)           not null
       constraint CKC_SEXE_PATIENT_PATIENT check (SEXE_PATIENT in ('F','M')),
-   DDN_PATIENT          CHAR(10)              not null,
+   DDN_PATIENT          DATE                  not null,
    NUM_SECU_PATIENT     NUMBER                not null,
    MENOPAUSE            NUMBER                not null
       constraint CKC_MENOPAUSE_PATIENT check (MENOPAUSE in (0,1)),
@@ -662,7 +662,6 @@ create table PATIENT (
    TYPE_SOUS_GROUPE     NUMBER,
    DATE_FIN_INCLUSION   DATE,
    MOTIF_FIN_INCLUSION  CLOB,
-   ATTRIBUT_93          CHAR(10),
    constraint PK_PATIENT primary key (ID_PATIENT)
 )
 /
