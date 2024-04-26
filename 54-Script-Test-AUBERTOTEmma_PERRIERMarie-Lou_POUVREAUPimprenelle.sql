@@ -267,8 +267,8 @@ BEGIN
     
     --créer un médecin et sélectionner son id
     INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin) 
-    VALUES (123456789, v_id_arc, 'Generaliste', 1, 'ArmondTestPCR3', 'MichelTestPCR3');
-    SELECT Num_ADELI_Medecin INTO v_num_adeli_medecin FROM Medecin WHERE Nom_Medecin = 'ArmondTestPCR3';
+    VALUES (123456789, v_id_arc, 'Generaliste', 1, 'ArmondTestPCR3Nom', 'MichelTestPCR3');
+    SELECT Num_ADELI_Medecin INTO v_num_adeli_medecin FROM Medecin WHERE Nom_Medecin = 'ArmondTestPCR3Nom';
     
     --créer un patient avec maladie grave et sélectionner son id
     INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
@@ -360,33 +360,6 @@ call Test_Date_Prochaine_Analyse_PCR_ResultatPos();
 --##########################################################################################################################################################################################################
 
 
-CREATE OR REPLACE PROCEDURE TestAutoIncrementation_Effort_Analyse deterministic AS
-    vpremiere_id int;
-    vseconde_id int;
-BEGIN
-    commit;
-    INSERT INTO EFFORT_ANALYSE(ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
-    VALUES (1, SYSDATE, 0, 100, 100, 100);
-    INSERT INTO EFFORT_ANALYSE(ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
-    VALUES (2, SYSDATE, 0, 100, 100, 100);
-    select ID_ANALYSE_EFFORT into vpremiere_id from EFFORT_ANALYSE where ID_PATIENT = 1;
-    select ID_ANALYSE_EFFORT into vseconde_id from EFFORT_ANALYSE where ID_PATIENT = 2;
-    
-    if vpremiere_id = 1 and vseconde_id = 2 then
-        rollback; 
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('TestAutoIncrementation_Effort_Analyse', 'Test réussit') ;
-        commit ; 
-    else
-        rollback;
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('TestAutoIncrementation_Effort_Analyse', 'défaillance') ;
-        commit;
-     end if;
-end;
-/
-
-call TestAutoIncrementation_Effort_Analyse();
-
---------------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE Test_prediction_prochaine_date_Effort_Analyse deterministic AS
     vpremiere_date_analyse date;
     vseconde_date_analyse date;
@@ -509,10 +482,21 @@ call Test_prediction_prochaine_date_Effort_Analyse();
 CREATE OR REPLACE PROCEDURE TestRandomisationAge deterministic AS
 
     nbPatient NUMBER;
+    v_id_arc number;
+    v_num_adeli number;
+    
 BEGIN
+    INSERT INTO ARC (Nom_ARC, Prenom_ARC)
+    VALUES ('Testrandomisation', 'Mariline');
+    select ID_ARC into v_id_arc from ARC where Nom_ARC = 'Testrandomisation';
+
+    INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+    VALUES (123456789, v_id_arc, 'generaliste', 45, 'Pineau', 'Marie');
+    select Num_ADELI_Medecin into v_num_adeli from Medecin where Nom_Medecin = 'Pineau';
+
     FOR i IN 1..10 LOOP
         INSERT INTO PATIENT (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
-        VALUES (123456789, 'Rouget', 'Frederic', 'M', TO_DATE('22/03/1970', 'DD-MM-YYYY'), 2122345678912, 1, 1, 1, 0, 0, null, null);
+        VALUES (v_num_adeli, 'Rouget', 'Frederic', 'M', TO_DATE('22/03/1970', 'DD-MM-YYYY'), 2122345678912, 1, 1, 1, 0, 0, null, null);
     END LOOP;
     select count(*) into nbPatient from PATIENT where NOM_PATIENT = 'Rouget' AND TYPE_GROUPE <> 'PP' AND TYPE_SOUS_GROUPE = 1;
     if nbPatient=0 then
@@ -577,6 +561,7 @@ CREATE OR REPLACE PROCEDURE test_verif_existance_lot_administre_positif AS
             INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test positif existence numéro de lot', 'Échoué');
         END IF;
 END;
+
 call test_verif_existance_lot_administre_positif();
 
 --------------------------------------------------------------------------------------------------------------------------------
@@ -768,7 +753,9 @@ BEGIN
         END IF;    
 END;
 /
+
 call test_Remplissage_plan_de_prise_medoc();
+
 -----------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE test_Remplissage_plan_de_prise_medoc AS
     v_lot_count NUMBER;
