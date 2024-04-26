@@ -216,7 +216,7 @@ end ;
 --################### Exclusion de patient pour l'age et les maladies graves ###############################################################################################################################
 --##########################################################################################################################################################################################################
 
-CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion
+CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion_Age
 BEFORE INSERT OR UPDATE ON PATIENT
 FOR EACH ROW
 DECLARE
@@ -246,10 +246,25 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20040, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut plus être inclus et a été supprimé.');
         END IF;
     END IF;
-END Insertion_Patient_Exclusion;
+END Insertion_Patient_Exclusion_Age;
 /
 
-
+CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion_Vaccins
+BEFORE INSERT OR UPDATE ON PATIENT
+FOR EACH ROW
+BEGIN
+    IF (:NEW.OBESITE = 1 AND :NEW.HYPERTENSION = 1) THEN
+        IF INSERTING THEN
+            RAISE_APPLICATION_ERROR(-20030, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut pas être inclus.');
+        END IF;
+        
+        IF UPDATING THEN
+            DELETE FROM PATIENT WHERE Id_Patient = :OLD.Id_Patient;
+            RAISE_APPLICATION_ERROR(-20040, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut plus être inclus et a été supprimé.');
+        END IF;
+    END IF;
+END Insertion_Patient_Exclusion_Vaccins;
+/
 --####################################################################################################################################
 --###################################### RANDOMISATION PATIENT ###########################################################
 --####################################################################################################################################
