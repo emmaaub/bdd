@@ -247,7 +247,7 @@ BEGIN
         END IF;
     END IF;
     
-    IF (:NEW.VACCINATIONGRIPPE = 1 OR :NEW.VACCINATIONCOVID = 1) THEN
+    IF (:NEW.VACCINATIONGRIPPE = 0 OR :NEW.VACCINATIONCOVID = 0) THEN
         IF INSERTING THEN
             RAISE_APPLICATION_ERROR(-20050, 'Problème de vaccin : il manque au moins 1 vaccin au patient, il ne peut pas être inclus.');
         END IF;

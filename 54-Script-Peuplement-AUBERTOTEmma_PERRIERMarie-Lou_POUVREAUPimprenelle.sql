@@ -45,7 +45,7 @@ end Intervalles_resultats_sang_peuplement;
 CREATE OR REPLACE PROCEDURE Peuplement_Centre
 AS
 BEGIN
-    INSERT INTO CENTRE_EC (NOM_CENTRE) VALUES ('Maragolles');
+    INSERT INTO CENTRE_EC (NOM_CENTRE) VALUES ('Maragolles_peuplement');
     COMMIT;
 END Peuplement_Centre;
 /
@@ -62,7 +62,7 @@ IS
     pidcentre INT;
 BEGIN
     -- Sélectionner l'ID du centre
-    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE Id_centre_ec = 1;
+    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE nom_centre = 'Maragolles_peuplement';
     
         -- Insérer dans la table ARC
         INSERT INTO ARC (ID_CENTRE_EC, Nom_ARC, Prenom_ARC)
@@ -85,10 +85,9 @@ AS
     PIDARC int;
     pidcentre INT;
 BEGIN
-
-    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE Id_centre_ec = 1;
+    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE nom_centre = 'Maragolles_peuplement';
     
-    SELECT Id_ARC INTO PIDARC FROM ARC WHERE Id_ARC = 1;
+    SELECT Id_ARC INTO PIDARC FROM ARC WHERE nom_arc = 'Kys';
     INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, ID_CENTRE_EC,Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
     VALUES (PnumADELI, PIDARC, pidcentre,Pspe_med, Pcohorte, PNomM, PPrenomM);
     COMMIT;
@@ -127,7 +126,7 @@ END Peuplement_patient;
 --##########################################################################################################################################################################################################
    
 CREATE OR REPLACE PROCEDURE Peuplement_Analyse_Sang(
-    PIdPatient INT,
+    
     PDate_Analyse DATE,
     Pcomplementaire INT,
     PresChol INT,
@@ -140,7 +139,7 @@ CREATE OR REPLACE PROCEDURE Peuplement_Analyse_Sang(
 AS
  v_id_patient int;
 BEGIN
-    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Id_Patient = PIdPatient;
+    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE nom_patient = 'Richard';
     
     INSERT INTO Sang_Analyse (Id_Patient, Date_Analyse_Sang, Complementaire_Sang, Resultat_Cholesterol, Resultat_Glycemie, Resultat_Plaquettes, Resultat_4, Resultat_5, Resultat_6) 
     VALUES (v_id_patient, PDate_Analyse, Pcomplementaire, PresChol, PresGly, PresPlaq, Pres4, Pres5, Pres6);
@@ -154,14 +153,14 @@ END Peuplement_Analyse_Sang;
 --##########################################################################################################################################################################################################
 
 CREATE OR REPLACE PROCEDURE Peuplement_PCR_COVID (
-    p_id_patient INT,
+    
     p_date_analyse_pcr_covid DATE,
     p_resultat_pcr_covid VARCHAR2
 )
 AS
     v_id_patient int;
 BEGIN
-    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Id_Patient = p_id_patient;
+    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE nom_patient = 'Richard';
     
     INSERT INTO PCR_Covid_Analyse (Id_Patient, Date_Analyse_PCR_Covid, Resultat_PCR_Covid) 
     VALUES (v_id_patient, p_date_analyse_pcr_covid, p_resultat_pcr_covid);
@@ -175,19 +174,20 @@ END Peuplement_PCR_COVID;
 --##########################################################################################################################################################################################################
 
 CREATE OR REPLACE PROCEDURE Peuplement_Analyse_Effort(
-   PID_PATIENT NUMBER,
+   
    PDATE_ANALYSE_EFFORT DATE,
    PCOMPLEMENTAIRE_EFFORT NUMBER,
    PRESULTAT_AVANT_BPM NUMBER,
    PRESULTAT_APRES_BPM NUMBER,
    PRESULTAT_UNEMIN_BPM NUMBER)
 AS
-    id_pat int;
+    v_id_pat int;
 BEGIN
-    SELECT Id_Patient INTO id_pat FROM Patient WHERE Id_Patient = PID_PATIENT;
+   
+    SELECT Id_Patient INTO v_id_pat FROM Patient WHERE nom_patient = 'Richard';
     
     INSERT INTO Effort_Analyse (ID_PATIENT, Date_Analyse_effort, Complementaire_effort, RESULTAT_AVANT_BPM, RESULTAT_APRES_BPM, RESULTAT_UNEMIN_BPM) 
-    VALUES (id_pat, PDATE_ANALYSE_EFFORT, PCOMPLEMENTAIRE_EFFORT, PRESULTAT_AVANT_BPM, PRESULTAT_APRES_BPM, PRESULTAT_UNEMIN_BPM);
+    VALUES (v_id_pat, PDATE_ANALYSE_EFFORT, PCOMPLEMENTAIRE_EFFORT, PRESULTAT_AVANT_BPM, PRESULTAT_APRES_BPM, PRESULTAT_UNEMIN_BPM);
     
 END Peuplement_Analyse_Effort;
 /
@@ -205,7 +205,7 @@ CREATE OR REPLACE PROCEDURE Peuplement_Auxiliaire (
 AS
     pidcentre int;
 BEGIN
-    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE Id_centre_ec = 1;
+    SELECT Id_centre_ec INTO pidcentre FROM centre_ec WHERE nom_centre = 'Maragolles_peuplement';
     
     INSERT INTO AUXILIAIRE (NUM_ADELI_AUXILIAIRE, ID_CENTRE_EC, SPECIALITE_AUXILIAIRE, NOM_AUXILIAIRE, PRENOM_AUXILIAIRE)
     VALUES (p_num_adeli_aux, pidcentre, p_spe_aux, p_nom_aux, p_prenom_aux);
@@ -222,7 +222,7 @@ END Peuplement_Auxiliaire;
 CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
     p_num_aux INTEGER,
     p_num_lot integer,
-   p_id_patient INTEGER,
+   
    p_num_medecin integer,
     p_date_visite date,
     p_poids number, 
@@ -233,9 +233,13 @@ CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
     p_j_etude number
 )
 As 
+    v_id_pat number;
 BEGIN
+      SELECT Id_Patient INTO v_id_pat FROM Patient WHERE nom_patient = 'Richard';
+      
+      
       INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
-      VALUES (p_num_aux, p_num_lot, p_id_patient, p_num_medecin, p_date_visite, p_poids, p_pression_arte, p_rythme_cardiaque,  p_temperature, p_deb_jour, p_j_etude);
+      VALUES (p_num_aux, p_num_lot, v_id_pat, p_num_medecin, p_date_visite, p_poids, p_pression_arte, p_rythme_cardiaque,  p_temperature, p_deb_jour, p_j_etude);
    
 END Peuplement_Visite_Quotidienne;
 /
@@ -275,14 +279,16 @@ end;
 --##########################################################################################################################################################################################################
 
 CREATE OR REPLACE PROCEDURE Peuplement_Carnet_Medical (
-    v_id_pat number,
+    
     v_nom_patho varchar2,
     v_date_deb_patho date,
     v_date_fin_patho date,
     v_gravite number
 )
 As 
+v_id_pat number;
 BEGIN
+    SELECT Id_patient INTO v_id_pat FROM PATIENT WHERE prenom_patient = 'Tof';
    INSERT INTO LIGNE_CARNET_MEDICAL (ID_PATIENT, NOM_PATHOLOGIE, DATE_DEBUT_PATHOLOGIE, DATE_FIN_PATHOLOGIE, GRAVITE)
     VALUES (v_id_pat, v_nom_patho, v_date_deb_patho, v_date_fin_patho, v_gravite);
 
@@ -306,23 +312,23 @@ call Peuplement_Centre();
 CALL Peuplement_ARC ('Kys', 'Raoult');
 CALL Peuplement_Medecin (123456789, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
 CALL Peuplement_Medecin (987654321, 'Generaliste', 2, 'Leroy', 'Geraldine');
-CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2001-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1);
+CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2001-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 1, 1, 0, 1);
 CALL Peuplement_patient('Jeanne', 'Tof', 'F', TO_DATE('1980-01-19', 'YYYY-MM-DD'), 280022652352144, 1, 1, 1, 0, 0);
 
-CALL Peuplement_Carnet_Medical (2, 'Mononucleose', TO_DATE('2000-01-01', 'YYYY-MM-DD'), TO_DATE('2000-05-05', 'YYYY-MM-DD'), 2);
+CALL Peuplement_Carnet_Medical ('Mononucleose', TO_DATE('2000-01-01', 'YYYY-MM-DD'), TO_DATE('2000-05-05', 'YYYY-MM-DD'), 2);
 
 CALL Peuplement_Auxiliaire (135790246, 'infirmier','Lefevre', 'Sophie');
 CALL Peuplement_Auxiliaire (135791113, 'infirmier','Dubois', 'Edouard');
 CALL Peuplement_Auxiliaire (151719212, 'kinesitherapeuthe','Moulin', 'Jean');
 
 
-CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
-CALL Peuplement_PCR_Covid (1, SYSDATE, 'Negatif');
-CALL Peuplement_Analyse_Sang (1, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
+CALL Peuplement_Analyse_Effort (SYSDATE, 0, 100, 100, 100);
+CALL Peuplement_PCR_Covid (SYSDATE, 'Negatif');
+CALL Peuplement_Analyse_Sang (SYSDATE, 0, 3, 3, 3, 3, 3, 3);
 
-call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 1);
-call Peuplement_Visite_Quotidienne(135790246, 102, 1, 123456789, SYSDATE, 100, 13, 95, 37, 1, 2);
-call Peuplement_Visite_Quotidienne(135790246, 103, 1, 123456789, SYSDATE, 100, 13, 93, 37, 1, 3);
+call Peuplement_Visite_Quotidienne(135790246, 101, 123456789, SYSDATE, 100, 13, 90, 37, 1, 1);
+call Peuplement_Visite_Quotidienne(135790246, 102, 123456789, SYSDATE, 100, 13, 95, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 103, 123456789, SYSDATE, 100, 13, 93, 37, 1, 3);
 call Peupler(100);
 
 
