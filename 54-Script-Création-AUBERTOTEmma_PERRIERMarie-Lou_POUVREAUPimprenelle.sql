@@ -522,10 +522,62 @@ create table EEG_ANALYSE (
    DATE_PROCHAINE_ANALYSE_EEG DATE,
    COMPLEMENTAIRE_EEG   NUMBER                not null
       constraint CKC_COMPLEMENTAIRE_EE_EEG_ANAL check (COMPLEMENTAIRE_EEG in (0,1)),
-   RESULTAT_EEG         NUMBER,
-   constraint PK_EEG_ANALYSE primary key (ID_ANALYSE_EEG)
+   RESULTAT_EEG         NUMBER
+      constraint VALUES_EEG check (RESULTAT_EEG>0 AND RESULTAT_EEG<=9),    
+      constraint PK_EEG_ANALYSE primary key (ID_ANALYSE_EEG)
 )
+
 /
+CREATE OR REPLACE PROCEDURE calculer_prochaine_analyse (patient_id EEG_ANALYSE.ID_PATIENT%TYPE) AS
+    v_resultat_precedent1 NUMBER;
+    v_resultat_precedent2 NUMBER;
+    v_date_precedent1 DATE;
+    v_date_precedent2 DATE;
+    v_date_prochaine_analyse DATE;
+BEGIN
+    
+    
+    -- Récupérer les deux résultats précédents pour le patient
+    SELECT RESULTAT_EEG, DATE_ANALYSE_EEG
+    INTO v_resultat_precedent1, v_date_precedent1
+    FROM EEG_ANALYSE
+    WHERE ID_PATIENT = patient_id
+    ORDER BY DATE_ANALYSE_EEG DESC
+    FETCH FIRST 1 ROWS ONLY;
+     
+
+    SELECT RESULTAT_EEG, DATE_ANALYSE_EEG
+    INTO v_resultat_precedent2, v_date_precedent2
+    FROM EEG_ANALYSE
+    WHERE ID_PATIENT = patient_id
+    AND DATE_ANALYSE_EEG < v_date_precedent1 AND DATE_PROCHAINE_ANALYSE_EEG IS NULL
+    ORDER BY DATE_ANALYSE_EEG DESC
+    FETCH FIRST 1 ROWS ONLY;
+    --Si on est dans le cas d'une seule analyse :
+    IF v_resultat_precedent2 IS NULL THEN
+        v_resultat_precedent2 := 3; 
+        v_date_precedent2 := TRUNC(SYSDATE); 
+    END IF;
+
+    -- Déterminer la date de la prochaine analyse en fonction des résultats précédents
+    IF v_resultat_precedent1 < 3 AND v_resultat_precedent2 < 3 THEN
+        -- Si les deux résultats précédents sont inférieurs à 3, programmer une analyse complémentaire à J+1
+        v_date_prochaine_analyse := v_date_precedent1 + 1;
+    ELSE
+        -- Sinon, garder la prochaine analyse à J+3
+        v_date_prochaine_analyse := v_date_precedent1 + 3;
+    END IF;
+
+    -- Mettre à jour la table avec la date de la prochaine analyse
+    UPDATE EEG_ANALYSE
+    SET DATE_PROCHAINE_ANALYSE_EEG = v_date_prochaine_analyse
+    WHERE ID_PATIENT = patient_id
+    AND DATE_ANALYSE_EEG = v_date_precedent1;
+    
+    COMMIT; 
+END;
+/
+
 
 /*==============================================================*/
 /* Index : ANALYSE_TEST_EEG_FK                                  */

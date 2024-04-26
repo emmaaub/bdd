@@ -305,4 +305,33 @@ call Peuplement_Visite_Quotidienne(135790246, 6408, 66, 123456789, SYSDATE, 100,
 
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
  
-
+--##########################################################################################################################################################################################################
+--################### PEUPLEMENT ANALYSE EEG ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+create or replace procedure Peupler(n in number) deterministic as
+    VPatient number;
+    v_random_date DATE; 
+    VResultat number;
+begin
+    for i in 1..n loop
+        select
+            round(8*DBMS_Random.Value()+1),
+            TRUNC(SYSDATE)+DBMS_RANDOM.VALUE(0,-100),
+            round(8*DBMS_Random.Value()+1)
+        into
+            VPatient,
+            v_random_date,
+            VResultat
+        from dual;
+        insert into EEG_ANALYSE values (
+            null,
+            VPatient,
+            v_random_date,
+            null,
+            null,
+            Vresultat
+        );
+    end loop;
+end;
+/
+call Peupler(100);

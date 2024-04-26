@@ -702,6 +702,49 @@ BEGIN
 END;
 /
 
+/*==============================================================*/
+/* Trigger : Génération d'ID  EEG_ANALYSE                                  */
+/*==============================================================*/
+drop sequence S1;
+create sequence S1;
+
+create or replace trigger ValeurID
+before insert on EEG_ANALYSE for each row
+begin
+    select S1.nextval into :new.ID_ANALYSE_EEG from dual;
+end;
+/
+/*==============================================================*/
+/* Trigger : PROGRAMMATION prochaine analyse */
+/*==============================================================*/
+CREATE OR REPLACE TRIGGER trg_compound_eeg_analyse
+FOR INSERT OR UPDATE ON EEG_ANALYSE
+COMPOUND TRIGGER
+    analysesPrecedentes NUMBER := 0;
+    patientID EEG_ANALYSE.ID_PATIENT%TYPE;
+
+    AFTER EACH ROW IS
+    BEGIN
+        patientID := :new.ID_PATIENT;
+    END AFTER EACH ROW;
+    AFTER STATEMENT IS
+    BEGIN    
+        --On doit vérifier que le patient à d'autres analyses pour les comparer
+        SELECT COUNT(*)
+        INTO analysesPrecedentes
+        FROM EEG_ANALYSE
+        WHERE ID_PATIENT = patientID;
+
+        IF analysesPrecedentes > 0 THEN
+            calculer_prochaine_analyse(patientID);
+        END IF;
+    END AFTER STATEMENT;
+
+END trg_compound_eeg_analyse;
+/
+
+
+
 
 
 
