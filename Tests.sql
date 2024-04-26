@@ -531,54 +531,282 @@ call TestRandomisationAge();
 --################### TESTS TABLE VISITE QUOTIDIENNE ET LOT ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
 
-CREATE OR REPLACE PROCEDURE test_verif_existance_lot_administre AS
+CREATE OR REPLACE PROCEDURE test_verif_existance_lot_administre_positif AS
     v_lot_exists NUMBER;
-BEGIN
-    -- Démarrer une transaction
+    v_id_arc number;
+    v_id_ec number;
+    prediction_lot number;
+    v_id_patient number;
     BEGIN
-        -- Insertion d'un numéro de lot existant
-        INSERT INTO LOTS (NUMERO_LOT, TYPE_LOT) VALUES (123401, 'PP');
+        INSERT INTO centre_ec (Nom_centre)
+        VALUES ('Maragolles');
+        --select ID_centre_ec into v_id_ec from centre_ec where Nom_centre = 'Maragolles';
+        
+        INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+        VALUES (1, 'TestLotExistant', 'Mariline');
+        select ID_ARC into v_id_arc from ARC where Nom_ARC = 'TestLotExistant';
+
+        INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+        VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+        
+        INSERT INTO AUXILIAIRE (Num_ADELI_Auxiliaire, Id_centre_ec, Specialite_Auxiliaire, Nom_Auxiliaire, Prenom_Auxiliaire)
+        VALUES (111222333, 1, 'infirmier', 'Racine', 'George');
+        
+        INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
+        VALUES (999888777, 'TestExistanceLotNom', 'TestExistanceLotPrenom', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 202115936027333, 0, 1, 1, 0, 0, 'PP', 2);
+        SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'TestExistanceLotPrenom';
+        
+        prediction_lot := TO_NUMBER(TO_CHAR(v_id_patient) || '01');
         
         -- Insertion d'une visite quotidienne avec un numéro de lot existant
-        INSERT INTO VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE, NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, COMMENTAIRE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
-        VALUES (1, 123456, 123401, 1234, 654321, SYSDATE, 70, 120, 80, 37, 'Aucun commentaire', 1, 1);
+        INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+        VALUES (111222333, prediction_lot, v_id_patient, 999888777, SYSDATE, 70, 120, 80, 37, 1, 1);
 
         -- Vérification si le numéro de lot existe dans la table LOTS
         SELECT COUNT(*) INTO v_lot_exists
         FROM LOTS
-        WHERE NUMERO_LOT = 123401;
+        WHERE NUMERO_LOT = prediction_lot;
         
         -- Insertion du résultat du test dans la table TESTS_BDD
         IF v_lot_exists = 1 THEN
-            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test existence numéro de lot', 'Réussi');
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test positif existence numéro de lot', 'Réussi');
         ELSE
-            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test existence numéro de lot', 'Échoué');
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test positif existence numéro de lot', 'Échoué');
         END IF;
-        
-        -- Rollback pour annuler les modifications effectuées dans la transaction
-        ROLLBACK;
-    END;
+END;
+call test_verif_existance_lot_administre_positif();
 
-    -- Démarrer une nouvelle transaction
+--------------------------------------------------------------------------------------------------------------------------------
+    
+CREATE OR REPLACE PROCEDURE test_verif_existance_lot_administre_negatif AS
+    v_lot_exists NUMBER;
+    v_id_arc number;
+    v_id_ec number;
+    prediction_lot number;
+    v_id_patient number;
     BEGIN
-        -- Tentative d'insertion avec un numéro de lot inexistant
-        BEGIN
-            INSERT INTO VISITE_QUOTIDIENNE (ID_VISITE_QUOTIDIENNE, NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, COMMENTAIRE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
-            VALUES (2, 123456, 999999, 1234, 654321, SYSDATE, 70, 120, 80, 37, 'Aucun commentaire', 1, 1);
-            -- Si l'insertion réussit, afficher un message d'erreur
+        INSERT INTO centre_ec (Nom_centre)
+        VALUES ('Maragolles');
+        
+        INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+        VALUES (1, 'TestLotExistant', 'Mariline');
+        select ID_ARC into v_id_arc from ARC where Nom_ARC = 'TestLotExistant';
+
+        INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+        VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+        
+        INSERT INTO AUXILIAIRE (Num_ADELI_Auxiliaire, Id_centre_ec, Specialite_Auxiliaire, Nom_Auxiliaire, Prenom_Auxiliaire)
+        VALUES (111222333, 1, 'infirmier', 'Racine', 'George');
+        
+        INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
+        VALUES (999888777, 'TestExistanceLotNom', 'TestExistanceLotPrenom', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 202115936027333, 0, 1, 1, 0, 0, 'PP', 2);
+        SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'TestExistanceLotPrenom';
+        
+        --prediction_lot := TO_NUMBER(TO_CHAR(v_id_patient) || '01');
+        
+        -- Insertion d'une visite quotidienne avec un numéro de lot existant
+        INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+        VALUES (111222333, 023405, v_id_patient, 999888777, SYSDATE, 70, 120, 80, 37, 1, 1);
+
+        -- Vérification si le numéro de lot existe dans la table LOTS
+        SELECT COUNT(*) INTO v_lot_exists
+        FROM LOTS
+        WHERE NUMERO_LOT = 023405;
+        
+        -- Insertion du résultat du test dans la table TESTS_BDD
+        IF v_lot_exists = 1 THEN
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test insertion avec numéro de lot inexistant', 'Réussi');
+        ELSE
+            ROLLBACK;
             INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test insertion avec numéro de lot inexistant', 'Échoué');
-        EXCEPTION
-            WHEN OTHERS THEN
-                -- Si une erreur est déclenchée, afficher un message de succès
-                INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test insertion avec numéro de lot inexistant', 'Réussi');
-        END;
-        -- Rollback pour annuler les modifications effectuées dans la transaction
-        ROLLBACK;
-    END;
+        END IF;
+END;
+call test_verif_existance_lot_administre_negatif();
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE test_verif_lot_administre_positif AS
+    v_lot_exists NUMBER;
+    v_id_arc number;
+    v_id_ec number;
+    prediction_lot number;
+    v_id_patient number;
+    v_id_patient2 number;
+    v_date_fin_inclusion date;
+    BEGIN
+        INSERT INTO centre_ec (Nom_centre)
+        VALUES ('Maragolles');
+        
+        INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+        VALUES (1, 'TestLotExistant', 'Mariline');
+        select ID_ARC into v_id_arc from ARC where Nom_ARC = 'TestLotExistant';
+
+        INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+        VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+        
+        INSERT INTO AUXILIAIRE (Num_ADELI_Auxiliaire, Id_centre_ec, Specialite_Auxiliaire, Nom_Auxiliaire, Prenom_Auxiliaire)
+        VALUES (111222333, 1, 'infirmier', 'Racine', 'George');
+        
+        INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
+        VALUES (999888777, 'TestVerifLotNom', 'TestVerifLotPrenom', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 202115936027333, 0, 1, 1, 0, 0, 'PP', 2);
+        SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'TestVerifLotPrenom';
+        
+        iNSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
+        VALUES (999888777, 'TestVerifLotNom2', 'TestVerifLotPrenom2', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 202115936027333, 0, 1, 1, 0, 0, 'PP', 2);
+        SELECT Id_Patient INTO v_id_patient2 FROM Patient WHERE Prenom_Patient = 'TestVerifLotPrenom2';
+        
+        prediction_lot := TO_NUMBER(TO_CHAR(v_id_patient) || '01');
+        
+        -- Insertion d'une visite quotidienne avec un numéro de lot existant
+        INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+        VALUES (111222333, prediction_lot, v_id_patient2, 999888777, SYSDATE, 70, 120, 80, 37, 1, 1);
+
+        -- Vérification si le patient 2 est exclu ou non 
+        SELECT DATE_FIN_INCLUSION
+        INTO v_date_fin_inclusion
+        FROM PATIENT
+        WHERE ID_PATIENT = v_id_patient2;
+        
+        IF v_date_fin_inclusion IS NOT NULL THEN
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test positif verification de l erreur de lot', 'Échoué');
+        ELSE
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test positif verification de l erreur de lot', 'Réussi');
+        END IF;
+END;
+call test_verif_lot_administre_positif();   
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE test_verif_lot_administre_negatif AS
+    v_lot_exists NUMBER;
+    v_id_arc number;
+    v_id_ec number;
+    prediction_lot number;
+    v_id_patient number;
+    v_id_patient2 number;
+    v_date_fin_inclusion date;
+    BEGIN
+        INSERT INTO centre_ec (Nom_centre)
+        VALUES ('Maragolles');
+        
+        INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+        VALUES (1, 'TestLotExistant', 'Mariline');
+        select ID_ARC into v_id_arc from ARC where Nom_ARC = 'TestLotExistant';
+
+        INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+        VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+        
+        INSERT INTO AUXILIAIRE (Num_ADELI_Auxiliaire, Id_centre_ec, Specialite_Auxiliaire, Nom_Auxiliaire, Prenom_Auxiliaire)
+        VALUES (111222333, 1, 'infirmier', 'Racine', 'George');
+        
+        INSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
+        VALUES (999888777, 'TestVerifLotNom', 'TestVerifLotPrenom', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 202115936027333, 0, 1, 1, 0, 0, 'VP', 2);
+        SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'TestVerifLotPrenom';
+        
+        iNSERT INTO Patient (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
+        VALUES (999888777, 'TestVerifLotNom2', 'TestVerifLotPrenom2', 'M', TO_DATE('2002-01-19', 'YYYY-MM-DD'), 202115936027333, 0, 1, 1, 0, 0, 'TP', 3);
+        SELECT Id_Patient INTO v_id_patient2 FROM Patient WHERE Prenom_Patient = 'TestVerifLotPrenom2';
+        
+        prediction_lot := TO_NUMBER(TO_CHAR(v_id_patient) || '06');
+        
+        -- Insertion d'une visite quotidienne avec un numéro de lot existant
+        INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
+        VALUES (111222333, prediction_lot, v_id_patient2, 999888777, SYSDATE, 70, 120, 80, 37, 1, 6);
+
+        -- Vérification si le patient 2 est exclu ou non 
+        SELECT DATE_FIN_INCLUSION
+        INTO v_date_fin_inclusion
+        FROM PATIENT
+        WHERE ID_PATIENT = v_id_patient2;
+        
+        IF v_date_fin_inclusion IS NOT NULL THEN
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test négatif verification de l erreur de lot', 'Réussi');
+        ELSE
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test négatif verification de l erreur de lot', 'Echoué');
+        END IF;
+END;
+call test_verif_lot_administre_negatif();  
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE test_Remplissage_plan_de_prise_medoc AS
+    v_lot_count NUMBER;
+    v_id_patient number;
+    v_id_arc number;
+BEGIN
+        INSERT INTO centre_ec (Nom_centre)
+        VALUES ('Maragolles');
+        
+        INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+        VALUES (1, 'TestLotExistant', 'Mariline');
+        select ID_ARC into v_id_arc from ARC where Nom_ARC = 'TestLotExistant';
+
+        INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+        VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+        
+        INSERT INTO PATIENT (NUM_ADELI_MEDECIN, NOM_PATIENT, PRENOM_PATIENT, SEXE_PATIENT, DDN_PATIENT, NUM_SECU_PATIENT, MENOPAUSE, VACCINATIONGRIPPE, VACCINATIONCOVID, HYPERTENSION, OBESITE, TYPE_GROUPE, TYPE_SOUS_GROUPE)
+        VALUES (999888777, 'Nom_Test', 'Prenom_TestRemplissageLot', 'M', '2002-01-19', 202115936027333, 0, 1, 1, 0, 0, 'PP', 1);
+        SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'Prenom_TestRemplissageLot';
+
+    -- Vérifier si les lots ont été correctement ajoutés à la table LOTS pour le patient ajouté
+        SELECT COUNT(*) INTO v_lot_count FROM LOTS WHERE SUBSTR(NUMERO_LOT, 1, LENGTH(TO_CHAR(v_id_patient))) = TO_CHAR(v_id_patient);
+    
+        IF v_lot_count = 15 THEN
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test remplissage automatique table lot verif patient', 'Réussi');
+        ELSE
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test remplissage automatique table lot verif patient', 'Echoué');
+        END IF;    
 END;
 /
-call TEST_VERIF_EXISTANCE_LOT_ADMINISTRE();
+call test_Remplissage_plan_de_prise_medoc();
+-----------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE test_Remplissage_plan_de_prise_medoc AS
+    v_lot_count NUMBER;
+    v_patient_id PATIENT.ID_PATIENT%TYPE;
+BEGIN
+    INSERT INTO centre_ec (Nom_centre)
+    VALUES ('Maragolles');
+    
+    INSERT INTO ARC (Id_centre_ec, Nom_ARC, Prenom_ARC)
+    VALUES (1, 'TestLotExistant', 'Mariline');
+    SELECT ID_ARC INTO v_id_arc FROM ARC WHERE Nom_ARC = 'TestLotExistant';
 
+    INSERT INTO Medecin (Num_ADELI_Medecin, Id_ARC, Id_centre_ec, Specialite_Medecin, Cohorte_Referent, Nom_Medecin, Prenom_Medecin)
+    VALUES (999888777, v_id_arc, 1, 'generaliste', 45, 'Pin', 'Marie');
+    
+    INSERT INTO PATIENT (NUM_ADELI_MEDECIN, NOM_PATIENT, PRENOM_PATIENT, SEXE_PATIENT, DDN_PATIENT, NUM_SECU_PATIENT, MENOPAUSE, VACCINATIONGRIPPE, VACCINATIONCOVID, HYPERTENSION, OBESITE, TYPE_GROUPE, TYPE_SOUS_GROUPE)
+    VALUES (999888777, 'Nom_Test', 'Prenom_TestRemplissageLot', 'M', '2002-01-19', 202115936027333, 0, 1, 1, 0, 0, 'PP', 1);
+    SELECT Id_Patient INTO v_id_patient FROM Patient WHERE Prenom_Patient = 'Prenom_TestRemplissageLot';
+
+    -- Vérification si les lots ont été correctement ajoutés à la table LOTS pour le patient ajouté
+    SELECT COUNT(*) INTO v_lot_count FROM LOTS WHERE SUBSTR(NUMERO_LOT, 1, LENGTH(TO_CHAR(v_patient_id))) = TO_CHAR(v_patient_id);
+
+    -- Vérification si les deux derniers chiffres du numéro de lot correspondent bien au jour d'étude
+    FOR lot_row IN (SELECT NUMERO_LOT FROM LOTS WHERE SUBSTR(NUMERO_LOT, 1, LENGTH(TO_CHAR(v_patient_id))) = TO_CHAR(v_patient_id)) LOOP
+        IF TO_NUMBER(SUBSTR(lot_row.NUMERO_LOT, -2)) <> lot_row.RANG_JOUR_ETUDE THEN
+            ROLLBACK;
+            INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test correspondance jour d\'étude dans le numéro de lot', 'Échoué');
+            RETURN;
+        END IF;
+    END LOOP;
+
+    IF v_lot_count = 15 THEN
+        ROLLBACK;
+        INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test remplissage automatique table lot', 'Réussi');
+    ELSE
+        ROLLBACK;
+        INSERT INTO TESTS_BDD (NOM_TEST, RESULTAT_TEST) VALUES ('Test remplissage automatique table lot', 'Échoué');
+    END IF;    
+END;
 
 
 
