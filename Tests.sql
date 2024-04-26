@@ -385,7 +385,8 @@ end;
 /
 
 call TestAutoIncrementation_Effort_Analyse();
- 
+
+--------------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE Test_prediction_prochaine_date_Effort_Analyse deterministic AS
     vpremiere_date_analyse date;
     vseconde_date_analyse date;
