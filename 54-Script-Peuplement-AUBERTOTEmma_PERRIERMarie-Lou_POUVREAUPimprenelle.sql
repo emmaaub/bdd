@@ -12,6 +12,7 @@ ALTER TRIGGER COMPOUNDDELETETRIGGER_EFFORT_A DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
 ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
 ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_LIGNE_CA DISABLE;
 
 alter table PCR_Covid_Analyse add constraint Nom_Resultats_PCR_Covid
 check (Resultat_PCR_Covid in ('Negatif','Variant alpha detecte','Variant delta detecte','Variant omega detecte'));
@@ -19,6 +20,23 @@ check (Resultat_PCR_Covid in ('Negatif','Variant alpha detecte','Variant delta d
 ALTER TABLE Intervalles_resultats_sang_ana add constraint Nom_Type_Analyse
 check (Type_Analyse in ('Cholesterol','Glycemie','Plaquettes','4','5','6'));
 
+--##########################################################################################################################################################################################################
+--################### PEUPLEMENT INTERVALLES SANG ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
+CREATE OR REPLACE PROCEDURE Intervalles_resultats_sang_peuplement(
+p_type_analyse varchar2,
+p_normal_1 integer,
+p_normal_2 integer,
+p_anormal_1 integer,
+p_anormal_2 integer
+)
+as
+
+begin 
+    INSERT INTO Intervalles_Resultats_Sang_Ana VALUES (p_type_analyse, p_normal_1, p_normal_2, p_anormal_1, p_anormal_2);
+end Intervalles_resultats_sang_peuplement;
+/
 
 --######################################################################################################################
 --######################### PEUPLEMENT CENTRE ESSAIS CLINIQUE ######################################################################
@@ -102,24 +120,6 @@ BEGIN
     VALUES (PNumADELIM, Pnom, PPrenom, Psexe, PDDN, PNumSecu, Pmeno, Pgrippe, Pcovid, Phypertension, Pobesite);
     COMMIT;
 END Peuplement_patient;
-/
-
---##########################################################################################################################################################################################################
---################### PEUPLEMENT INTERVALLES SANG ###########################################################################################################################################################################
---##########################################################################################################################################################################################################
-
-CREATE OR REPLACE PROCEDURE Intervalles_resultats_sang_peuplement(
-p_type_analyse varchar2,
-p_normal_1 integer,
-p_normal_2 integer,
-p_anormal_1 integer,
-p_anormal_2 integer
-)
-as
-
-begin 
-    INSERT INTO Intervalles_Resultats_Sang_Ana VALUES (p_type_analyse, p_normal_1, p_normal_2, p_anormal_1, p_anormal_2);
-end Intervalles_resultats_sang_peuplement;
 /
 
 --##########################################################################################################################################################################################################
@@ -214,26 +214,11 @@ BEGIN
 END Peuplement_Auxiliaire;
 /
 
---######################################################################################################################
---######################### PEUPLEMENT LOTS ######################################################################
---######################################################################################################################
-
-CREATE OR REPLACE PROCEDURE Peuplement_Lots (
-    p_num_lot INT,
-    p_type_lot VARCHAR2)
-AS
-BEGIN
-    INSERT INTO LOTS (NUMERO_LOT, TYPE_LOT)
-    VALUES (p_num_lot, p_type_lot);
-    COMMIT;
-END Peuplement_Lots;
-/
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT VISITE QUOTIDIENNE ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
 
------------------------EN COURS ------------------------------------------------------
 CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
     p_num_aux INTEGER,
     p_num_lot integer,
@@ -249,15 +234,8 @@ CREATE OR REPLACE PROCEDURE Peuplement_Visite_Quotidienne (
 )
 As 
 BEGIN
-   --FOR i IN 1..3 LOOP 
-        --SELECT Num_adeli_auxiliaire INTO p_num_aux FROM Auxiliaire WHERE Num_adeli_auxiliaire = 135790246;
-        --SELECT id_patient INTO p_id_patient FROM Patient WHERE Id_Patient = 1;
-        --SELECT Num_adeli_medecin INTO p_num_medecin FROM Medecin WHERE Num_adeli_medecin = 123456789;
-        --SELECT Numero_lot INTO p_num_lot FROM Lots WHERE Numero_lot = 101;
-      -- Insertion des données dans la table
       INSERT INTO VISITE_QUOTIDIENNE (NUM_ADELI_AUXILIAIRE, NUMERO_LOT, ID_PATIENT, NUM_ADELI_MEDECIN, DATE_VISITE_QUOTIDIENNE, POIDS, PRESSION_ARTERIELLE, RYTHME_CARDIAQUE, TEMPERATURE, DEBUT_DE_JOURNEE, JOUR_ETUDE)
       VALUES (p_num_aux, p_num_lot, p_id_patient, p_num_medecin, p_date_visite, p_poids, p_pression_arte, p_rythme_cardiaque,  p_temperature, p_deb_jour, p_j_etude);
-   --END LOOP;
    
 END Peuplement_Visite_Quotidienne;
 /
@@ -292,6 +270,29 @@ begin
 end;
 /
 
+--##########################################################################################################################################################################################################
+--################### PEUPLEMENT CARNET MEDICAL ###########################################################################################################################################################################
+--##########################################################################################################################################################################################################
+
+CREATE OR REPLACE PROCEDURE Peuplement_Carnet_Medical (
+    v_id_pat number,
+    v_nom_patho varchar2,
+    v_date_deb_patho date,
+    v_date_fin_patho date,
+    v_gravite number
+)
+As 
+BEGIN
+   INSERT INTO LIGNE_CARNET_MEDICAL (ID_PATIENT, NOM_PATHOLOGIE, DATE_DEBUT_PATHOLOGIE, DATE_FIN_PATHOLOGIE, GRAVITE)
+    VALUES (v_id_pat, v_nom_patho, v_date_deb_patho, v_date_fin_patho, v_gravite);
+
+END;
+/
+
+
+
+
+
 --Peuplement pour les intervalles de résultats de sang à exécuter avant d'exécuter les tests
 CALL Intervalles_resultats_sang_peuplement('Cholesterol', 2, 5, 0, 7);
 CALL Intervalles_resultats_sang_peuplement('Glycemie', 2, 5, 0, 7);
@@ -306,6 +307,10 @@ CALL Peuplement_ARC ('Kys', 'Raoult');
 CALL Peuplement_Medecin (123456789, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
 CALL Peuplement_Medecin (987654321, 'Generaliste', 2, 'Leroy', 'Geraldine');
 CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2001-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1);
+CALL Peuplement_patient('Jeanne', 'Tof', 'F', TO_DATE('1980-01-19', 'YYYY-MM-DD'), 280022652352144, 1, 1, 1, 0, 0);
+
+CALL Peuplement_Carnet_Medical (2, 'Mononucleose', TO_DATE('2000-01-01', 'YYYY-MM-DD'), TO_DATE('2000-05-05', 'YYYY-MM-DD'), 2);
+
 CALL Peuplement_Auxiliaire (135790246, 'infirmier','Lefevre', 'Sophie');
 CALL Peuplement_Auxiliaire (135791113, 'infirmier','Dubois', 'Edouard');
 CALL Peuplement_Auxiliaire (151719212, 'kinesitherapeuthe','Moulin', 'Jean');
@@ -315,13 +320,9 @@ CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
 CALL Peuplement_PCR_Covid (1, SYSDATE, 'Negatif');
 CALL Peuplement_Analyse_Sang (1, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
 
-call Peuplement_Visite_Quotidienne(135790246, 1050, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
-call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
-call Peuplement_Visite_Quotidienne(135790246, 6408, 66, 123456789, SYSDATE, 100, 13, 90, 37, 1, 8);
-CALL Peuplement_Lots (000101, 'TV');
-CALL Peuplement_Lots (000102, 'PP');
-CALL Peuplement_Lots (000103, 'PP');
-CALL Peuplement_Lots (000104, 'TV');
+call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 1);
+call Peuplement_Visite_Quotidienne(135790246, 102, 1, 123456789, SYSDATE, 100, 13, 95, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 103, 1, 123456789, SYSDATE, 100, 13, 93, 37, 1, 3);
 call Peupler(100);
 
 
