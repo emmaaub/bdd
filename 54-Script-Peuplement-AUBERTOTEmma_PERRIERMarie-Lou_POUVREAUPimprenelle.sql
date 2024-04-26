@@ -1,3 +1,25 @@
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_CENTRE_E DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_ARC DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_MEDECIN DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_PATIENT DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_SANG_ANA DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_PCR_COVI DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDDELETETRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
+ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
+
+alter table PCR_Covid_Analyse add constraint Nom_Resultats_PCR_Covid
+check (Resultat_PCR_Covid in ('Negatif','Variant alpha detecte','Variant delta detecte','Variant omega detecte'));
+
+ALTER TABLE Intervalles_resultats_sang_ana add constraint Nom_Type_Analyse
+check (Type_Analyse in ('Cholesterol','Glycemie','Plaquettes','4','5','6'));
+
+
 --######################################################################################################################
 --######################### PEUPLEMENT CENTRE ESSAIS CLINIQUE ######################################################################
 --######################################################################################################################
@@ -9,9 +31,7 @@ BEGIN
     COMMIT;
 END Peuplement_Centre;
 /
-call Peuplement_Centre();
 
---ALTER TRIGGER COMPOUNDINSERTTRIGGER_CENTRE_E DISABLE;
 --##################################################################################################################################################################################
 --################### PEUPLEMENT ARC ##########################################################################################################################################################
 --##################################################################################################################################################################################
@@ -32,10 +52,6 @@ BEGIN
         COMMIT;
 END Peuplement_ARC;
 /
-
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_ARC DISABLE;
-CALL Peuplement_ARC ('Kys', 'Raoult');
-
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT MEDECIN ###########################################################################################################################################################################
@@ -61,10 +77,6 @@ BEGIN
     
 END Peuplement_Medecin;
 /
-
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_MEDECIN DISABLE;
-CALL Peuplement_Medecin (123456789, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
-CALL Peuplement_Medecin (987654321, 'Generaliste', 2, 'Leroy', 'Geraldine');
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT PATIENT ###########################################################################################################################################################################
@@ -92,16 +104,9 @@ BEGIN
 END Peuplement_patient;
 /
 
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_PATIENT DISABLE;
-
-CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2001-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1);
-
-
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT INTERVALLES SANG ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
-ALTER TABLE Intervalles_resultats_sang_ana add constraint Nom_Type_Analyse
-check (Type_Analyse in ('Cholesterol','Glycemie','Plaquettes','4','5','6'));
 
 CREATE OR REPLACE PROCEDURE Intervalles_resultats_sang_peuplement(
 p_type_analyse varchar2,
@@ -116,15 +121,6 @@ begin
     INSERT INTO Intervalles_Resultats_Sang_Ana VALUES (p_type_analyse, p_normal_1, p_normal_2, p_anormal_1, p_anormal_2);
 end Intervalles_resultats_sang_peuplement;
 /
-
-CALL Intervalles_resultats_sang_peuplement('Cholesterol', 2, 5, 0, 7);
-CALL Intervalles_resultats_sang_peuplement('Glycemie', 2, 5, 0, 7);
-CALL Intervalles_resultats_sang_peuplement('Plaquettes', 2, 5, 0, 7);
-CALL Intervalles_resultats_sang_peuplement('4', 2, 5, 0, 7);
-CALL Intervalles_resultats_sang_peuplement('5', 2, 5, 0, 7);
-CALL Intervalles_resultats_sang_peuplement('6', 2, 5, 0, 7);
-
-
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT ANALYSE SANG ###########################################################################################################################################################################
@@ -153,17 +149,9 @@ BEGIN
 END Peuplement_Analyse_Sang;
 /
 
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_SANG_ANA DISABLE;
-ALTER TRIGGER COMPOUNDUPDATETRIGGER_SANG_ANA DISABLE;
-
-CALL Peuplement_Analyse_Sang (1, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
-
-
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT ANALYSE PCR COVID ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
-alter table PCR_Covid_Analyse add constraint Nom_Resultats_PCR_Covid
-check (Resultat_PCR_Covid in ('Negatif','Variant alpha detecte','Variant delta detecte','Variant omega detecte'));
 
 CREATE OR REPLACE PROCEDURE Peuplement_PCR_COVID (
     p_id_patient INT,
@@ -181,13 +169,6 @@ BEGIN
     COMMIT;
 END Peuplement_PCR_COVID;
 /
-
-
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_PCR_COVI DISABLE;
-ALTER TRIGGER COMPOUNDUPDATETRIGGER_PCR_COVI DISABLE;
-ALTER TRIGGER COMPOUNDUPDATETRIGGER_PATIENT DISABLE;
-
-CALL Peuplement_PCR_Covid (1, SYSDATE, 'Negatif');
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT ANALYSE EFFORT ###########################################################################################################################################################################
@@ -209,15 +190,6 @@ BEGIN
     VALUES (id_pat, PDATE_ANALYSE_EFFORT, PCOMPLEMENTAIRE_EFFORT, PRESULTAT_AVANT_BPM, PRESULTAT_APRES_BPM, PRESULTAT_UNEMIN_BPM);
     
 END Peuplement_Analyse_Effort;
-/
-
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_EFFORT_A DISABLE;
-ALTER TRIGGER COMPOUNDDELETETRIGGER_EFFORT_A DISABLE;
-ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
-ALTER TRIGGER COMPOUNDUPDATETRIGGER_EFFORT_A DISABLE;
-DELETE FROM EFFORT_ANALYSE;
-
-CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
 /
 
 --######################################################################################################################
@@ -242,10 +214,6 @@ BEGIN
 END Peuplement_Auxiliaire;
 /
 
-CALL Peuplement_Auxiliaire (135790246, 'infirmier','Lefevre', 'Sophie');
-CALL Peuplement_Auxiliaire (135791113, 'infirmier','Dubois', 'Edouard');
-CALL Peuplement_Auxiliaire (151719212, 'kinesitherapeuthe','Moulin', 'Jean');
-
 --######################################################################################################################
 --######################### PEUPLEMENT LOTS ######################################################################
 --######################################################################################################################
@@ -260,11 +228,6 @@ BEGIN
     COMMIT;
 END Peuplement_Lots;
 /
-
-CALL Peuplement_Lots (000101, 'TV');
-CALL Peuplement_Lots (000102, 'PP');
-CALL Peuplement_Lots (000103, 'PP');
-CALL Peuplement_Lots (000104, 'TV');
 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT VISITE QUOTIDIENNE ###########################################################################################################################################################################
@@ -299,12 +262,6 @@ BEGIN
 END Peuplement_Visite_Quotidienne;
 /
 
-call Peuplement_Visite_Quotidienne(135790246, 1050, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
-call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
-call Peuplement_Visite_Quotidienne(135790246, 6408, 66, 123456789, SYSDATE, 100, 13, 90, 37, 1, 8);
-
-ALTER TRIGGER COMPOUNDINSERTTRIGGER_VISITE_Q DISABLE;
- 
 --##########################################################################################################################################################################################################
 --################### PEUPLEMENT ANALYSE EEG ###########################################################################################################################################################################
 --##########################################################################################################################################################################################################
@@ -334,4 +291,39 @@ begin
     end loop;
 end;
 /
+
+--Peuplement pour les intervalles de résultats de sang à exécuter avant d'exécuter les tests
+CALL Intervalles_resultats_sang_peuplement('Cholesterol', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('Glycemie', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('Plaquettes', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('4', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('5', 2, 5, 0, 7);
+CALL Intervalles_resultats_sang_peuplement('6', 2, 5, 0, 7);
+
+
+call Peuplement_Centre();
+CALL Peuplement_ARC ('Kys', 'Raoult');
+CALL Peuplement_Medecin (123456789, 'Generaliste', 1, 'Micheldeux', 'Micheldeux');
+CALL Peuplement_Medecin (987654321, 'Generaliste', 2, 'Leroy', 'Geraldine');
+CALL Peuplement_patient('Richard', 'Test', 'M', TO_DATE('2001-01-19', 'YYYY-MM-DD'), 101022652352144, 1, 0, 0, 0, 1);
+CALL Peuplement_Auxiliaire (135790246, 'infirmier','Lefevre', 'Sophie');
+CALL Peuplement_Auxiliaire (135791113, 'infirmier','Dubois', 'Edouard');
+CALL Peuplement_Auxiliaire (151719212, 'kinesitherapeuthe','Moulin', 'Jean');
+
+
+CALL Peuplement_Analyse_Effort (1, SYSDATE, 0, 100, 100, 100);
+CALL Peuplement_PCR_Covid (1, SYSDATE, 'Negatif');
+CALL Peuplement_Analyse_Sang (1, SYSDATE, 0, 3, 3, 3, 3, 3, 3);
+
+call Peuplement_Visite_Quotidienne(135790246, 1050, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 101, 1, 123456789, SYSDATE, 100, 13, 90, 37, 1, 2);
+call Peuplement_Visite_Quotidienne(135790246, 6408, 66, 123456789, SYSDATE, 100, 13, 90, 37, 1, 8);
+CALL Peuplement_Lots (000101, 'TV');
+CALL Peuplement_Lots (000102, 'PP');
+CALL Peuplement_Lots (000103, 'PP');
+CALL Peuplement_Lots (000104, 'TV');
 call Peupler(100);
+
+
+
+
