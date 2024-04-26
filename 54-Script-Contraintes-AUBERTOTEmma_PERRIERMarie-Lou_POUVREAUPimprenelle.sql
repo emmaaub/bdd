@@ -213,10 +213,10 @@ end ;
 /
 
 --##########################################################################################################################################################################################################
---################### Exclusion de patient pour l'age et les maladies graves ###############################################################################################################################
+--################### Exclusion de patient pour l'age, les maladies graves ou le manque d'un vaccin ###############################################################################################################################
 --##########################################################################################################################################################################################################
 
-CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion_Age
+CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion
 BEFORE INSERT OR UPDATE ON PATIENT
 FOR EACH ROW
 DECLARE
@@ -246,31 +246,27 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20040, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut plus être inclus et a été supprimé.');
         END IF;
     END IF;
-END Insertion_Patient_Exclusion_Age;
-/
-
-CREATE OR REPLACE TRIGGER Insertion_Patient_Exclusion_Vaccins
-BEFORE INSERT OR UPDATE ON PATIENT
-FOR EACH ROW
-BEGIN
-    IF (:NEW.OBESITE = 1 AND :NEW.HYPERTENSION = 1) THEN
+    
+    IF (:NEW.VACCINATIONGRIPPE = 1 OR :NEW.VACCINATIONCOVID = 1) THEN
         IF INSERTING THEN
-            RAISE_APPLICATION_ERROR(-20030, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut pas être inclus.');
+            RAISE_APPLICATION_ERROR(-20050, 'Problème de vaccin : il manque au moins 1 vaccin au patient, il ne peut pas être inclus.');
         END IF;
-        
         IF UPDATING THEN
             DELETE FROM PATIENT WHERE Id_Patient = :OLD.Id_Patient;
-            RAISE_APPLICATION_ERROR(-20040, 'Problème de maladies graves : le patient a trop de maladie grave, il ne peut plus être inclus et a été supprimé.');
+            RAISE_APPLICATION_ERROR(-20060, 'Problème de vaccin : il manque au moins 1 vaccin au patient, il ne peut plus être inclus et a été supprimé.');
         END IF;
+        
     END IF;
-END Insertion_Patient_Exclusion_Vaccins;
+END Insertion_Patient_Exclusion;
 /
+
+
 --####################################################################################################################################
 --###################################### RANDOMISATION PATIENT ###########################################################
 --####################################################################################################################################
 
 
-CREATE OR REPLACE TRIGGER RandomizeGroupAndSubgroupVersionHaute
+CREATE OR REPLACE TRIGGER Randomisation_Patients
 BEFORE INSERT ON PATIENT
 FOR EACH ROW
 DECLARE
@@ -736,7 +732,7 @@ CREATE OR REPLACE TRIGGER trg_compound_eeg_analyse
 FOR INSERT OR UPDATE ON EEG_ANALYSE
 COMPOUND TRIGGER
     analysesPrecedentes NUMBER := 0;
-    patientID EEG_ANALYSE.ID_PATIENT%TYPE;
+    patientID NUMBER;
 
     AFTER EACH ROW IS
     BEGIN

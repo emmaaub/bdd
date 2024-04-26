@@ -809,33 +809,3 @@ BEGIN
     END IF;    
 END;
 
-----------------------------Test Vaccins-------------------------------
-CREATE OR REPLACE PROCEDURE TestVaccins deterministic AS
-
-    nbPatient NUMBER;
-BEGIN
-    
-        INSERT INTO PATIENT (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
-        VALUES (123456789, 'Rouget', 'Frederic', 'M', TO_DATE('22/03/1970', 'DD-MM-YYYY'), 2122345678912, 0, 1, 1, 0, 0, null, null);
-        
-        INSERT INTO PATIENT (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
-        VALUES (123456789, 'Fouquet', 'Luis', 'M', TO_DATE('22/03/1970', 'DD-MM-YYYY'), 2122345678912, 0, 1, 0, 0, 0, null, null);
-        
-        INSERT INTO PATIENT (Num_ADELI_Medecin, Nom_Patient, Prenom_Patient, Sexe_Patient, DDN_Patient, Num_Secu_Patient, Menopause, VaccinationGrippe, VaccinationCovid, Hypertension, Obesite, Type_Groupe, Type_Sous_Groupe)
-        VALUES (123456789, 'Boulet', 'Morgane', 'M', TO_DATE('22/03/1970', 'DD-MM-YYYY'), 2122345678912, 0, 0, 1, 0, 0, null, null);
-  
-    select count(*) into nbPatient from PATIENT where VaccinationGrippe  = 0 OR VaccinationCovid=0;
-    if nbPatient=0 then
-        rollback; 
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('TestVaccins', 'Test réussi');
-        commit; 
-    elsif nbPatient<>0 then 
-        rollback; 
-        insert into TESTS_BDD (Nom_Test, Resultat_Test) values('TestVaccins', 'Des personnes non vaccinées sont dans la bdd');
-        commit; 
-    end if;
-END;
-/
-call  TestVaccins();
-
-
